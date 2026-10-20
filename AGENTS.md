@@ -45,25 +45,21 @@ a reference back is `Terminal::Query`.
 ## Repository layout
 
 ```
-shard.yml                          bytewire, tty, termwidth
-makefile                           shards, spec, layers, run
-src/asekii-term.cr                 both systems
-src/asekii-term/terminal.cr        entry: opens Asekii::Event and Asekii::Terminal, then the parts
-src/asekii-term/terminal/          the Terminal class split by concern (config, wire, session, events,
-                                   parser, engine, color, clipboard, graphics, notify, dnd, identity,
-                                   passthrough, indicators)
-src/asekii-term/render.cr          entry: opens Asekii::Render, then the engine in dependency order
-src/asekii-term/render/            interner, color_space, palette, paint, text_layout, stroke, canvas,
-                                   role_spec, theme, theme_enums, sprite, bitmap, plane, stroke_images,
-                                   pile, compositor
-src/asekii-term/raster.cr          Asekii::ImageProtocol and Asekii::Raster: PNG, scaling, Sixel, iTerm2
-src/asekii-term/kitty_graphics.cr  Asekii::KittyGraphics: the shared kitty delete and place builders
-src/asekii-term/color_syntax.cr    Asekii::ColorSyntax: the shared colour grammar
-src/asekii-term/unicode_placeholder.cr  Asekii::UnicodePlaceholder: the kitty placeholder table
-spec/terminal/terminal_spec.cr     the protocol suite; drives Terminal over pipes and real PTYs
-spec/terminal/run.sh               the protocol matrix, before a release
-spec/render/                       the engine suite; Engine drives it with a Bytewire, no app
-spec/palette16.cr                  the 16-colour reference palettes the render specs use
+shard.yml                                      bytewire, tty, termwidth
+makefile                                       shards, spec, layers, run
+src/asekii-term.cr                             both systems
+src/asekii-term/terminal.cr                    entry: opens Asekii::Event and Asekii::Terminal, then the parts
+src/asekii-term/terminal/                      the Terminal class split by concern (config, wire, session, events, parser, engine, color, clipboard, graphics, notify, dnd, identity, passthrough, indicators)
+src/asekii-term/render.cr                      entry: opens Asekii::Render, then the engine in dependency order
+src/asekii-term/render/                        interner, color_space, palette, paint, text_layout, stroke, canvas, role_spec, theme, theme_enums, sprite, bitmap, plane, stroke_images, pile, compositor
+src/asekii-term/common/raster.cr               Asekii::ImageProtocol and Asekii::Raster: PNG, scaling, Sixel, iTerm2
+src/asekii-term/common/kitty_graphics.cr       Asekii::KittyGraphics: the shared kitty delete and place builders
+src/asekii-term/common/color_syntax.cr         Asekii::ColorSyntax: the shared colour grammar
+src/asekii-term/common/unicode_placeholder.cr  Asekii::UnicodePlaceholder: the kitty placeholder table
+spec/terminal/terminal_spec.cr                 the protocol suite; drives Terminal over pipes and real PTYs
+spec/terminal/run.sh                           the protocol matrix, before a release
+spec/render/                                   the engine suite; Engine drives it with a Bytewire, no app
+spec/palette16.cr                              the 16-colour reference palettes the render specs use
 ```
 
 `make` prunes `lib/*` down to `shard.yml` and `src`, so the dependencies' own specs and AGENTS.md are
