@@ -1,0 +1,23 @@
+# shard.yml
+name: asekii-term
+version: 1.0.0
+
+authors:
+  - shpeckman
+
+description: |
+  The terminal and render layers of the Asekii framework: the kitty terminal protocols,
+  a layered render engine, and the shared raster, kitty-graphics, colour-syntax and
+  unicode-placeholder primitives, on termwidth's grapheme segmentation and cell width.
+
+crystal: ">= 1.21.0"
+
+license: MIT
+
+dependencies:
+  bytewire:
+    github: shpeckman/bytewire
+  tty:
+    github: shpeckman/tty
+  termwidth:
+    github: shpeckman/termwidth

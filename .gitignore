@@ -1,0 +1,8 @@
+# .gitignore
+/docs/
+/lib/
+/bin/
+/.shards/
+*.dwarf
+shard.lock
+/spec/readme/examples.cr
