@@ -6,8 +6,8 @@ module Asekii
     record Channels, red : UInt16, green : UInt16, blue : UInt16
 
     def self.parse(text : String) : {Channels, Float64}?
-      reader  = Bytewire::Reader.new(text)
-      body    = reader.take_until?(0x40_u8) || reader.take_rest
+      reader = Bytewire::Reader.new(text)
+      body = reader.take_until?(0x40_u8) || reader.take_rest
       opacity = reader.match?(0x40_u8) ? String.new(reader.take_rest).to_f? : 1.0
       return unless opacity
       cursor = Bytewire::Reader.new(body)
@@ -22,9 +22,9 @@ module Asekii
       elsif cursor.match?('#') && cursor.remaining.in?(3, 6, 9, 12)
         width = cursor.remaining // 3
         shift = 16 - 4 * width
-        r     = cursor.hex?(UInt16, width) || return
-        g     = cursor.hex?(UInt16, width) || return
-        b     = cursor.hex?(UInt16, width) || return
+        r = cursor.hex?(UInt16, width) || return
+        g = cursor.hex?(UInt16, width) || return
+        b = cursor.hex?(UInt16, width) || return
         return unless cursor.eof?
         {Channels.new(r << shift, g << shift, b << shift), opacity}
       elsif cursor.match?("rgbi:")

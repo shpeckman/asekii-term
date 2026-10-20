@@ -1,8 +1,8 @@
 # src/asekii/render/role_spec.cr
 module Asekii::Render
   struct Blend
-    getter from   : Paint
-    getter to     : Paint
+    getter from : Paint
+    getter to : Paint
     getter amount : Float32
 
     def initialize(@from : Paint, @to : Paint, @amount : Float32)
@@ -12,7 +12,7 @@ module Asekii::Render
 
     def resolve(themes : Themes, theme : Theme?, palette : Palette, depth : Int32) : Paint
       from = Pile.rgb(themes.resolve_paint(self.from, theme, palette, depth), palette)
-      to   = Pile.rgb(themes.resolve_paint(self.to, theme, palette, depth), palette)
+      to = Pile.rgb(themes.resolve_paint(self.to, theme, palette, depth), palette)
       Paint.rgb(ColorSpace.mix(from, to, amount, themes.space))
     end
   end
@@ -28,7 +28,7 @@ module Asekii::Render
     end
 
     getter source : Paint
-    getter op     : Op
+    getter op : Op
     getter amount : Float32
 
     def initialize(@source : Paint, @op : Op, @amount : Float32)
@@ -62,7 +62,7 @@ module Asekii::Render
 
     def resolve(themes : Themes, theme : Theme?, palette : Palette, depth : Int32) : Paint
       source = themes.resolve_paint(self.source, theme, palette, depth)
-      rgb    = Pile.rgb(source, palette)
+      rgb = Pile.rgb(source, palette)
       if op.fade?
         alpha = (source.alpha.to_f32 * amount).round.to_i.clamp(0, 255).to_u8
         return Paint.rgb(rgb, alpha)
@@ -82,12 +82,12 @@ module Asekii::Render
 
   struct Contrast
     getter against : Paint
-    getter target  : Float32
-    getter from    : Paint
-    getter to      : Paint
-    getter amount  : Float32
-    getter picks   : Array(Paint)
-    getter floor   : Bool
+    getter target : Float32
+    getter from : Paint
+    getter to : Paint
+    getter amount : Float32
+    getter picks : Array(Paint)
+    getter floor : Bool
 
     def initialize(@against : Paint, @target : Float32, @from : Paint, @to : Paint,
                    @amount : Float32, @picks : Array(Paint), @floor : Bool)
@@ -106,13 +106,13 @@ module Asekii::Render
     end
 
     def resolve(themes : Themes, theme : Theme?, palette : Palette, depth : Int32) : Paint
-      goal    = themes.contrast_target(target)
+      goal = themes.contrast_target(target)
       against = Pile.rgb(themes.resolve_paint(self.against, theme, palette, depth), palette)
       unless picks.empty?
-        best       = picks[0]
+        best = picks[0]
         best_ratio = -Float32::MAX
         picks.each do |pick|
-          rgb   = Pile.rgb(themes.resolve_paint(pick, theme, palette, depth), palette)
+          rgb = Pile.rgb(themes.resolve_paint(pick, theme, palette, depth), palette)
           ratio = themes.contrast(rgb, against)
           return Paint.rgb(rgb) if ratio >= goal
           if ratio > best_ratio
@@ -123,7 +123,7 @@ module Asekii::Render
         return Paint.rgb(Pile.rgb(themes.resolve_paint(best, theme, palette, depth), palette))
       end
       from = Pile.rgb(themes.resolve_paint(self.from, theme, palette, depth), palette)
-      to   = Pile.rgb(themes.resolve_paint(self.to, theme, palette, depth), palette)
+      to = Pile.rgb(themes.resolve_paint(self.to, theme, palette, depth), palette)
       if floor
         return Paint.rgb(to) unless themes.contrast(to, against) >= goal
         Paint.rgb(ColorSpace.mix(from, to, floor_amount(themes, from, to, against, goal), themes.space))
@@ -169,7 +169,7 @@ module Asekii::Render
 
     private def endpoint(themes : Themes, from : UInt32, to : UInt32, against : UInt32) : Paint
       from_ratio = themes.contrast(from, against)
-      to_ratio   = themes.contrast(to, against)
+      to_ratio = themes.contrast(to, against)
       Paint.rgb(from_ratio >= to_ratio ? from : to)
     end
   end

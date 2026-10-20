@@ -49,7 +49,7 @@ describe Asekii::Render::ColorSpace do
   it "gamut maps saturated chroma without shifting hue" do
     [0xff0000_u32, 0x00ff00_u32, 0x0000ff_u32, 0xff00ff_u32].each do |rgb|
       l, c, h = Asekii::Render::ColorSpace.oklch(rgb)
-      mapped  = Asekii::Render::ColorSpace.from_oklch({l, c * 2.0_f32, h})
+      mapped = Asekii::Render::ColorSpace.from_oklch({l, c * 2.0_f32, h})
       _, _, mapped_h = Asekii::Render::ColorSpace.oklch(mapped)
       gap = (mapped_h - h).abs
       gap = (Math::PI * 2 - gap) if gap > Math::PI
@@ -111,7 +111,7 @@ describe Asekii::Render::Palette do
   end
 
   it "swaps the corners on light themes unless harmonious" do
-    base    = LIGHT16.map(&.to_u32)
+    base = LIGHT16.map(&.to_u32)
     swapped = Asekii::Render::Palette.generate(base, 0x4c4f69_u32, 0xeff1f5_u32)
     close(swapped[16], 0x4c4f69_u32).should be_true
     close(swapped[231], 0xeff1f5_u32).should be_true
@@ -141,7 +141,7 @@ describe Asekii::Render::Palette do
 
   it "interpolates whole palettes" do
     from = Asekii::Render::Palette.stock
-    to   = Asekii::Render::Palette.generate(DARK16.map(&.to_u32), 0xcdd6f4_u32, 0x1e1e2e_u32)
+    to = Asekii::Render::Palette.generate(DARK16.map(&.to_u32), 0xcdd6f4_u32, 0x1e1e2e_u32)
     Asekii::Render::Palette.mix(from, to, 0.0_f32, Asekii::Render::BlendSpace::Oklab).same?(from).should be_true
     Asekii::Render::Palette.mix(from, to, 1.0_f32, Asekii::Render::BlendSpace::Oklab).same?(to).should be_true
     half = Asekii::Render::Palette.mix(from, to, 0.5_f32, Asekii::Render::BlendSpace::Oklab)

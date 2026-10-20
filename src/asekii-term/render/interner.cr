@@ -8,9 +8,9 @@ module Asekii::Render
 
     def initialize
       @chunks = Pointer(Pointer(T)).malloc(CHUNKS)
-      @ids    = {} of T => Int32
-      @size   = Atomic(Int32).new(0)
-      @lock   = Sync::Mutex.new
+      @ids = {} of T => Int32
+      @size = Atomic(Int32).new(0)
+      @lock = Sync::Mutex.new
     end
 
     def intern(value : T, & : T -> T) : Int32

@@ -10,7 +10,7 @@ class Asekii::Terminal
               [::Signal::INT, ::Signal::TERM, ::Signal::HUP, ::Signal::QUIT]
             {% end %}
 
-  @@open   = Sync::Exclusive(Array(Asekii::Terminal)).new([] of Asekii::Terminal)
+  @@open = Sync::Exclusive(Array(Asekii::Terminal)).new([] of Asekii::Terminal)
   @@hooked = Atomic(Bool).new(false)
 
   def self.restore : Nil
@@ -38,18 +38,18 @@ class Asekii::Terminal
     end
   end
 
-  @cell_width  = Atomic(Int32).new(0)
+  @cell_width = Atomic(Int32).new(0)
   @cell_height = Atomic(Int32).new(0)
-  @rows        = Atomic(Int32).new(0)
-  @cols        = Atomic(Int32).new(0)
-  @sighted     = Atomic(Bool).new(true)
-  @setup       = ""
+  @rows = Atomic(Int32).new(0)
+  @cols = Atomic(Int32).new(0)
+  @sighted = Atomic(Bool).new(true)
+  @setup = ""
   @saved : TTY::Termios?
   @suspended = Atomic(Bool).new(false)
   @teardown : String
   @restored = Atomic(Bool).new(false)
   @features = Atomic(Int32).new(Feature::All.value)
-  @medium   = Atomic(Int32).new(-1)
+  @medium = Atomic(Int32).new(-1)
 
   CONTEXT = Fiber::ExecutionContext::Concurrent.new("asekii.term")
 
@@ -64,25 +64,25 @@ class Asekii::Terminal
 
   def initialize(@config : Config = Config.new, @input : IO::FileDescriptor = STDIN, @io : IO::FileDescriptor = STDOUT)
     ident(@config.clipboard_id)
-    @events      = Channel(Event::Input).new(@config.event_buffer)
-    @output      = Channel(Output).new(256)
-    @raw         = Channel(Event::Raw).new(256)
-    @pending     = Channel(Request).new(256)
-    @serving     = Channel(Array(String) | Int32).new(1024)
-    @stop        = Channel(Nil).new
+    @events = Channel(Event::Input).new(@config.event_buffer)
+    @output = Channel(Output).new(256)
+    @raw = Channel(Event::Raw).new(256)
+    @pending = Channel(Request).new(256)
+    @serving = Channel(Array(String) | Int32).new(1024)
+    @stop = Channel(Nil).new
     @reader_done = Channel(Nil).new
     @writer_done = Channel(Nil).new
-    @mutexes     = Family.values.map { Sync::Mutex.new(:reentrant) }
+    @mutexes = Family.values.map { Sync::Mutex.new(:reentrant) }
     @credentials = @config.app_name.try do |name|
       ":pw=#{Base64.strict_encode(UUID.random.to_s)}:name=#{Base64.strict_encode(name)}"
     end || ""
-    @mux    = keys(':', {'i', @config.dnd_id})
+    @mux = keys(':', {'i', @config.dnd_id})
     @passthrough = Passthrough.for(@config.multiplexer)
     @source = IO::FileDescriptor.new(duplicate(@input))
     setup_engine
-    screen    = @config.alternate_screen ? SCREEN : {"", ""}
+    screen = @config.alternate_screen ? SCREEN : {"", ""}
     @teardown = @config.leave + screen[1]
-    @saved    = capture
+    @saved = capture
     raw
     measure
     register
@@ -95,7 +95,7 @@ class Asekii::Terminal
     @features.set(found.value)
     @wire.synchronize do
       @teardown = @config.leave + FEATURES.reverse.join { |mode| mode.switch(found.includes?(mode.feature), false) } + screen[1]
-      @setup    = screen[0] + FEATURES.join { |mode| mode.switch(found.includes?(mode.feature), true) } + sizing + @config.enter
+      @setup = screen[0] + FEATURES.join { |mode| mode.switch(found.includes?(mode.feature), true) } + sizing + @config.enter
     end
     @output.send(@setup.lchop(screen[0]))
   end
@@ -144,7 +144,7 @@ class Asekii::Terminal
     @sighted.set(width > 0 && height > 0)
     @cell_width.set(width // cols) if width > 0
     @cell_height.set(height // rows) if height > 0
-    width  = cols * @cell_width.get if width <= 0
+    width = cols * @cell_width.get if width <= 0
     height = rows * @cell_height.get if height <= 0
     Event::Resize.new(rows, cols, height, width)
   end
@@ -302,7 +302,7 @@ class Asekii::Terminal
   private def survey : Feature
     return Feature::All unless @config.detect
     deadline = clock + @config.query_timeout
-    waiters  = FEATURES.map { |mode| {mode, enqueue(Query::Mode, mode.probe, mode.key, true)} }
+    waiters = FEATURES.map { |mode| {mode, enqueue(Query::Mode, mode.probe, mode.key, true)} }
     waiters.reduce(Feature::None) do |found, (mode, waiter)|
       state = await(waiter, {deadline - clock, Time::Span.zero}.max).as?(Int32) || 0
       state.in?(0, 4) ? found : found | mode.feature
