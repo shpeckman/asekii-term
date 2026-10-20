@@ -111,7 +111,7 @@ describe Asekii::Render::Palette do
   end
 
   it "swaps the corners on light themes unless harmonious" do
-    base = LIGHT16.map(&.to_u32)
+    base    = LIGHT16.map(&.to_u32)
     swapped = Asekii::Render::Palette.generate(base, 0x4c4f69_u32, 0xeff1f5_u32)
     close(swapped[16], 0x4c4f69_u32).should be_true
     close(swapped[231], 0xeff1f5_u32).should be_true
@@ -141,7 +141,7 @@ describe Asekii::Render::Palette do
 
   it "interpolates whole palettes" do
     from = Asekii::Render::Palette.stock
-    to = Asekii::Render::Palette.generate(DARK16.map(&.to_u32), 0xcdd6f4_u32, 0x1e1e2e_u32)
+    to   = Asekii::Render::Palette.generate(DARK16.map(&.to_u32), 0xcdd6f4_u32, 0x1e1e2e_u32)
     Asekii::Render::Palette.mix(from, to, 0.0_f32, Asekii::Render::BlendSpace::Oklab).same?(from).should be_true
     Asekii::Render::Palette.mix(from, to, 1.0_f32, Asekii::Render::BlendSpace::Oklab).same?(to).should be_true
     half = Asekii::Render::Palette.mix(from, to, 0.5_f32, Asekii::Render::BlendSpace::Oklab)

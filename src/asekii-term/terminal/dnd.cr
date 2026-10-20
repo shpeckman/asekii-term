@@ -1,4 +1,4 @@
-# src/asekii/terminal/dnd.cr
+# src/asekii-term/terminal/dnd.cr
 module Asekii::Event
   @[Flags]
   enum Operation
@@ -72,7 +72,7 @@ class Asekii::Terminal
     getter meta = {} of String => String
     getter text = Bytewire.new(128)
     getter data = Bytewire.new(256)
-    @carry = ""
+    @carry   = ""
     @scratch = Bytewire.new(4096)
 
     def decode(payload : String, sink : IO?, final : Bool) : Nil
@@ -80,7 +80,7 @@ class Asekii::Terminal
       size = final ? @carry.bytesize : @carry.bytesize & ~3
       return if size == 0
       encoded = @carry.byte_slice(0, size)
-      @carry = @carry.byte_slice(size)
+      @carry  = @carry.byte_slice(size)
       if sink
         @scratch.reset
         @scratch.decode64(encoded)
@@ -116,10 +116,10 @@ class Asekii::Terminal
   end
 
   @chains = {} of String => Chain
-  @chain = ""
+  @chain  = ""
   @mux : String
   @accepting = Atomic(Bool).new(false)
-  @offering = Atomic(Bool).new(false)
+  @offering  = Atomic(Bool).new(false)
 
   def dnd_support(limit : Time::Span = @config.query_timeout) : Hash(String, String)?
     dnd_request(Query::DndSupport, "t=q", limit, probe: true).as?(Hash(String, String))
@@ -333,7 +333,7 @@ class Asekii::Terminal
     if type = meta["t"]?
       @chain = type.in?("r", "R") ? "r:#{number(meta, "x")}:#{number(meta, "y")}:#{number(meta, "Y")}" : type
     end
-    name = @chain
+    name  = @chain
     chain = @chains.put_if_absent(name) { Chain.new }
     chain.meta.merge!(meta)
     final = meta["m"]? != "1"

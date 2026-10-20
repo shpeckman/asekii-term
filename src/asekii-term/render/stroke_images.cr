@@ -1,4 +1,4 @@
-# src/asekii/render/stroke_images.cr
+# src/asekii-term/render/stroke_images.cr
 module Asekii::Render
   class StrokeImages
     FIRST  = 0x00F0_0000_u32
@@ -30,32 +30,32 @@ module Asekii::Render
 
     alias Offload = Proc(Proc(Bytes), Proc(Bytes, Nil), Nil)
 
-    getter cell_width : Int32
+    getter cell_width  : Int32
     getter cell_height : Int32
 
-    property offload : Offload?
-    property landed : (-> Nil)?
-    property? exact : Bool
+    property offload  : Offload?
+    property landed   : (-> Nil)?
+    property? exact   : Bool
     property? indexed : Bool
 
     def initialize
-      @cell_width = 0
+      @cell_width  = 0
       @cell_height = 0
-      @masks = Sync::Exclusive(Hash({UInt32, Int32, Int32}, Bytes)).new({} of {UInt32, Int32, Int32} => Bytes)
-      @quarters = Sync::Exclusive(Hash({UInt32, Int32, Int32}, Bytes)).new({} of {UInt32, Int32, Int32} => Bytes)
-      @lock = Sync::Mutex.new
-      @ids = {} of Key => UInt32
-      @keys = {} of UInt32 => Key
-      @ready = Set(UInt32).new
-      @requests = [] of {UInt32, Key}
-      @queue = [] of Bytes
-      @serial = FIRST
-      @generation = 0
-      @purge = false
-      @offload = nil
-      @landed = nil
-      @exact = false
-      @indexed = false
+      @masks       = Sync::Exclusive(Hash({UInt32, Int32, Int32}, Bytes)).new({} of {UInt32, Int32, Int32} => Bytes)
+      @quarters    = Sync::Exclusive(Hash({UInt32, Int32, Int32}, Bytes)).new({} of {UInt32, Int32, Int32} => Bytes)
+      @lock        = Sync::Mutex.new
+      @ids         = {} of Key => UInt32
+      @keys        = {} of UInt32 => Key
+      @ready       = Set(UInt32).new
+      @requests    = [] of {UInt32, Key}
+      @queue       = [] of Bytes
+      @serial      = FIRST
+      @generation  = 0
+      @purge       = false
+      @offload     = nil
+      @landed      = nil
+      @exact       = false
+      @indexed     = false
     end
 
     def self.slot(paint : Paint) : UInt32?
@@ -85,7 +85,7 @@ module Asekii::Render
     def resize(width : Int32, height : Int32) : Bool
       return false if width == @cell_width && height == @cell_height
       @lock.synchronize do
-        @cell_width = Math.max(width, 0)
+        @cell_width  = Math.max(width, 0)
         @cell_height = Math.max(height, 0)
         @generation += 1
         @ids.clear
@@ -125,8 +125,8 @@ module Asekii::Render
         taken
       end
       return if requests.empty?
-      width = @cell_width
-      height = @cell_height
+      width      = @cell_width
+      height     = @cell_height
       generation = @generation
       requests.each do |id, key|
         offload.call(-> { encode(id, key, width, height) }, ->(payload : Bytes) { land(generation, id, payload) })
@@ -161,8 +161,8 @@ module Asekii::Render
     def delete(target : Bytewire, ids : Array(UInt32)) : Nil
       return if ids.empty?
       sorted = ids.sort
-      first = sorted.first
-      last = first
+      first  = sorted.first
+      last   = first
       sorted.each_with_index do |id, index|
         next if index == 0
         if id == last + 1_u32
@@ -171,7 +171,7 @@ module Asekii::Render
         end
         erase(target, first, last)
         first = id
-        last = id
+        last  = id
       end
       erase(target, first, last)
     end
@@ -190,7 +190,7 @@ module Asekii::Render
         @requests.clear
         @queue.clear
         @serial = FIRST
-        @purge = false
+        @purge  = false
       end
     end
 
@@ -215,7 +215,7 @@ module Asekii::Render
 
     private def allocate : UInt32
       loop do
-        id = @serial
+        id      = @serial
         @serial = id == LAST ? FIRST : id + 1_u32
         return id unless @keys.has_key?(id)
       end
@@ -232,7 +232,7 @@ module Asekii::Render
 
     private def quarters(stroke : UInt32, width : Int32, height : Int32) : Bytes
       shape = Strokes.intern(Strokes[stroke].shape)
-      slot = {shape, width, height}
+      slot  = {shape, width, height}
       if found = @quarters.lock { |cache| cache[slot]? }
         return found
       end
@@ -250,7 +250,7 @@ module Asekii::Render
              end
       packed = IO::Memory.new
       Compress::Zlib::Writer.open(packed, &.write(data))
-      wire = Bytewire.new(packed.size * 4 // 3 + 256)
+      wire  = Bytewire.new(packed.size * 4 // 3 + 256)
       first = true
       Bytewire.base64_chunks(packed.to_slice, CHUNK) do |chunk, more|
         wire.apc.char('G')
@@ -269,18 +269,18 @@ module Asekii::Render
     end
 
     private def baked_pixels(key : Key, width : Int32, height : Int32) : Bytes
-      mask = mask(key.stroke, width, height)
-      space = key.space
+      mask    = mask(key.stroke, width, height)
+      space   = key.space
       outside = ColorSpace.coords(key.outside, space)
-      filled = ColorSpace.coords(key.filled, space)
-      edged = ColorSpace.coords(key.edged, space)
-      both = ColorSpace.coords(key.both, space)
-      shades = {} of UInt16 => UInt32
-      count = width * height
-      data = Bytes.new(count * 3)
+      filled  = ColorSpace.coords(key.filled, space)
+      edged   = ColorSpace.coords(key.edged, space)
+      both    = ColorSpace.coords(key.both, space)
+      shades  = {} of UInt16 => UInt32
+      count   = width * height
+      data    = Bytes.new(count * 3)
       count.times do |index|
-        s = mask.unsafe_fetch(index * 2)
-        f = mask.unsafe_fetch(index * 2 + 1)
+        s     = mask.unsafe_fetch(index * 2)
+        f     = mask.unsafe_fetch(index * 2 + 1)
         shade = shades[(s.to_u16 << 8) | f] ||= baked(key, s, f, outside, filled, edged, both)
         data.unsafe_put(index * 3, ColorSpace.red(shade))
         data.unsafe_put(index * 3 + 1, ColorSpace.green(shade))
@@ -299,18 +299,18 @@ module Asekii::Render
         return key.both if f == 255_u8
       end
       across = f / 255.0_f32
-      down = s / 255.0_f32
-      plain = ColorSpace.lerp(outside, filled, across)
-      inked = ColorSpace.lerp(edged, both, across)
+      down   = s / 255.0_f32
+      plain  = ColorSpace.lerp(outside, filled, across)
+      inked  = ColorSpace.lerp(edged, both, across)
       ColorSpace.rgb(ColorSpace.lerp(plain, inked, down), key.space)
     end
 
     private def indexed_pixels(key : Key, width : Int32, height : Int32) : Bytes
-      mask = mask(key.stroke, width, height)
-      slot = (key.edged >> 8).to_u8!
+      mask  = mask(key.stroke, width, height)
+      slot  = (key.edged >> 8).to_u8!
       inked = (key.edged & 0xFF_u32).to_i32
       count = width * height
-      data = Bytes.new(count * 2)
+      data  = Bytes.new(count * 2)
       count.times do |index|
         data.unsafe_put(index * 2, slot)
         data.unsafe_put(index * 2 + 1, (mask.unsafe_fetch(index * 2).to_i32 * inked // 255).to_u8)
@@ -319,18 +319,18 @@ module Asekii::Render
     end
 
     private def clear_pixels(key : Key, width : Int32, height : Int32) : Bytes
-      mask = mask(key.stroke, width, height)
-      space = key.space
-      ink = ColorSpace.coords(key.edged >> 8, space)
-      fill = ColorSpace.coords(key.filled >> 8, space)
-      inked = (key.edged & 0xFF_u32).to_f32 / 255.0_f32
+      mask   = mask(key.stroke, width, height)
+      space  = key.space
+      ink    = ColorSpace.coords(key.edged >> 8, space)
+      fill   = ColorSpace.coords(key.filled >> 8, space)
+      inked  = (key.edged & 0xFF_u32).to_f32 / 255.0_f32
       filled = (key.filled & 0xFF_u32).to_f32 / 255.0_f32
       shades = {} of UInt16 => UInt32
-      count = width * height
-      data = Bytes.new(count * 4)
+      count  = width * height
+      data   = Bytes.new(count * 4)
       count.times do |index|
-        s = mask.unsafe_fetch(index * 2)
-        f = mask.unsafe_fetch(index * 2 + 1)
+        s     = mask.unsafe_fetch(index * 2)
+        f     = mask.unsafe_fetch(index * 2 + 1)
         shade = shades[(s.to_u16 << 8) | f] ||= clear(s, f, ink, fill, inked, filled, space)
         data.unsafe_put(index * 4, (shade >> 24).to_u8!)
         data.unsafe_put(index * 4 + 1, (shade >> 16).to_u8!)
@@ -341,15 +341,15 @@ module Asekii::Render
     end
 
     private def tinted_pixels(key : Key, width : Int32, height : Int32) : Bytes
-      cover = quarters(key.stroke, width, height)
-      space = key.space
-      ink = ColorSpace.coords(key.edged >> 8, space)
-      inked = (key.edged & 0xFF_u32).to_f32 / 255.0_f32
-      tints = StaticArray(ColorSpace::Triple, 4).new { |slot| ColorSpace.coords(key.tints[slot] >> 8, space) }
+      cover  = quarters(key.stroke, width, height)
+      space  = key.space
+      ink    = ColorSpace.coords(key.edged >> 8, space)
+      inked  = (key.edged & 0xFF_u32).to_f32 / 255.0_f32
+      tints  = StaticArray(ColorSpace::Triple, 4).new { |slot| ColorSpace.coords(key.tints[slot] >> 8, space) }
       levels = StaticArray(Float32, 4).new { |slot| (key.tints[slot] & 0xFF_u32).to_f32 / 255.0_f32 }
       shades = {} of UInt64 => UInt32
-      count = width * height
-      data = Bytes.new(count * 4)
+      count  = width * height
+      data   = Bytes.new(count * 4)
       count.times do |index|
         shade = shades[packed(cover, index)] ||= tinted(cover, index, ink, inked, tints, levels, space)
         data.unsafe_put(index * 4, (shade >> 24).to_u8!)
@@ -363,11 +363,11 @@ module Asekii::Render
     private def tinted(cover : Bytes, index : Int32, ink : ColorSpace::Triple, inked : Float32,
                        tints : StaticArray(ColorSpace::Triple, 4), levels : StaticArray(Float32, 4),
                        space : BlendSpace) : UInt32
-      top = cover.unsafe_fetch(index * 5) / 255.0_f32 * inked
-      keep = 1.0_f32 - top
-      red = top * ink[0]
-      green = top * ink[1]
-      blue = top * ink[2]
+      top    = cover.unsafe_fetch(index * 5) / 255.0_f32 * inked
+      keep   = 1.0_f32 - top
+      red    = top * ink[0]
+      green  = top * ink[1]
+      blue   = top * ink[2]
       amount = 0.0_f32
       4.times do |slot|
         share = cover.unsafe_fetch(index * 5 + 1 + slot) / 255.0_f32 * levels[slot]
@@ -385,15 +385,15 @@ module Asekii::Render
     end
 
     private def mixed_pixels(key : Key, width : Int32, height : Int32) : Bytes
-      cover = quarters(key.stroke, width, height)
-      space = key.space
+      cover   = quarters(key.stroke, width, height)
+      space   = key.space
       outside = ColorSpace.coords(key.outside, space)
-      ink = ColorSpace.coords(key.edged, space)
-      edge = key.both.to_f32 / 255.0_f32
-      tints = StaticArray(ColorSpace::Triple, 4).new { |slot| ColorSpace.coords(key.tints[slot], space) }
-      shades = {} of UInt64 => UInt32
-      count = width * height
-      data = Bytes.new(count * 3)
+      ink     = ColorSpace.coords(key.edged, space)
+      edge    = key.both.to_f32 / 255.0_f32
+      tints   = StaticArray(ColorSpace::Triple, 4).new { |slot| ColorSpace.coords(key.tints[slot], space) }
+      shades  = {} of UInt64 => UInt32
+      count   = width * height
+      data    = Bytes.new(count * 3)
       count.times do |index|
         shade = shades[packed(cover, index)] ||= mixed(cover, index, outside, ink, edge, tints, space)
         data.unsafe_put(index * 3, ColorSpace.red(shade))
@@ -405,10 +405,10 @@ module Asekii::Render
 
     private def mixed(cover : Bytes, index : Int32, outside : ColorSpace::Triple, ink : ColorSpace::Triple,
                       edge : Float32, tints : StaticArray(ColorSpace::Triple, 4), space : BlendSpace) : UInt32
-      rest = 1.0_f32
-      red = 0.0_f32
+      rest  = 1.0_f32
+      red   = 0.0_f32
       green = 0.0_f32
-      blue = 0.0_f32
+      blue  = 0.0_f32
       4.times do |slot|
         share = cover.unsafe_fetch(index * 5 + 1 + slot) / 255.0_f32
         next if share <= 0.0_f32
@@ -426,16 +426,16 @@ module Asekii::Render
     @[AlwaysInline]
     private def packed(cover : Bytes, index : Int32) : UInt64
       offset = index * 5
-      value = 0_u64
+      value  = 0_u64
       5.times { |step| value = (value << 8) | cover.unsafe_fetch(offset + step) }
       value
     end
 
     private def clear(s : UInt8, f : UInt8, ink : ColorSpace::Triple, fill : ColorSpace::Triple, inked : Float32,
                       filled : Float32, space : BlendSpace) : UInt32
-      top = s / 255.0_f32 * inked
+      top   = s / 255.0_f32 * inked
       under = f / 255.0_f32 * filled
-      rest = under * (1.0_f32 - top)
+      rest  = under * (1.0_f32 - top)
       total = top + rest
       return 0_u32 if total <= 0.0_f32
       mixed = ColorSpace.lerp(fill, ink, top / total)

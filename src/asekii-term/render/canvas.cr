@@ -1,4 +1,4 @@
-# src/asekii/render/canvas.cr
+# src/asekii-term/render/canvas.cr
 module Asekii::Render
   module Canvas
     abstract def cols : Int32
@@ -9,8 +9,8 @@ module Asekii::Render
     abstract def fill(x : Int32, y : Int32, cols : Int32, rows : Int32, glyph : Char? = nil,
                       fg : Paint? = nil, bg : Paint? = nil,
                       attrs : Attr = Attr::None, line : Paint? = nil,
-                      link : String? = nil) : Nil
-    abstract def fill(glyph : Char? = nil, fg : Paint? = nil, bg : Paint? = nil,
+                      link  : String? = nil) : Nil
+    abstract def fill(glyph : Char?   = nil, fg : Paint? = nil, bg : Paint? = nil,
                       attrs : Attr = Attr::None, line : Paint? = nil,
                       link : String? = nil) : Nil
     abstract def stroke(x : Int32, y : Int32, stroke : Stroke, fg : Paint? = nil, bg : Paint? = nil) : Nil

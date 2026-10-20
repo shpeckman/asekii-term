@@ -1,16 +1,16 @@
-# src/asekii/render/bitmap.cr
+# src/asekii-term/render/bitmap.cr
 module Asekii::Render
   class Bitmap
     record Rect, x : Int32, y : Int32, width : Int32, height : Int32
 
-    getter width : Int32
+    getter width  : Int32
     getter height : Int32
-    getter data : Bytes
+    getter data   : Bytes
 
     def initialize(width : Int32 = 0, height : Int32 = 0)
-      @width = Math.max(width, 0)
+      @width  = Math.max(width, 0)
       @height = Math.max(height, 0)
-      @data = Bytes.new(@width * @height * 4)
+      @data   = Bytes.new(@width * @height * 4)
     end
 
     def self.rgba(rgb : UInt32, alpha : UInt8 = 255_u8) : UInt32
@@ -18,12 +18,12 @@ module Asekii::Render
     end
 
     def resize(width : Int32, height : Int32) : Bool
-      width = Math.max(width, 0)
+      width  = Math.max(width, 0)
       height = Math.max(height, 0)
       return false if width == @width && height == @height
-      @width = width
+      @width  = width
       @height = height
-      @data = Bytes.new(@width * @height * 4)
+      @data   = Bytes.new(@width * @height * 4)
       true
     end
 
@@ -68,13 +68,13 @@ module Asekii::Render
     end
 
     def fill(x : Int32, y : Int32, width : Int32, height : Int32, rgba : UInt32) : Nil
-      left = Math.max(x, 0)
-      top = Math.max(y, 0)
-      right = Math.min(x + width, @width)
+      left   = Math.max(x, 0)
+      top    = Math.max(y, 0)
+      right  = Math.min(x + width, @width)
       bottom = Math.min(y + height, @height)
       return if left >= right || top >= bottom
       alpha = rgba & 0xFF_u32
-      row = top
+      row   = top
       while row < bottom
         col = left
         while col < right
@@ -89,12 +89,12 @@ module Asekii::Render
       return unless 0 <= x < @width && 0 <= y < @height
       top = (rgba & 0xFF_u32).to_f32 / 255.0_f32 * coverage.clamp(0.0_f32, 1.0_f32)
       return if top <= 0.0_f32
-      at = (y * @width + x) * 4
+      at    = (y * @width + x) * 4
       below = @data.unsafe_fetch(at + 3).to_f32 / 255.0_f32
-      rest = below * (1.0_f32 - top)
+      rest  = below * (1.0_f32 - top)
       total = top + rest
       3.times do |channel|
-        over = ((rgba >> (24 - channel * 8)) & 0xFF_u32).to_f32
+        over  = ((rgba >> (24 - channel * 8)) & 0xFF_u32).to_f32
         under = @data.unsafe_fetch(at + channel).to_f32
         @data.unsafe_put(at + channel, ((over * top + under * rest) / total).round.clamp(0.0_f32, 255.0_f32).to_u8)
       end
@@ -103,26 +103,26 @@ module Asekii::Render
 
     def line(x0 : Float64, y0 : Float64, x1 : Float64, y1 : Float64, rgba : UInt32, thickness : Float64 = 1.0) : Nil
       return unless x0.finite? && y0.finite? && x1.finite? && y1.finite?
-      half = Math.max(thickness, 0.5) / 2.0
-      reach = half + 1.0
-      left = Math.max((Math.min(x0, x1) - reach).floor.to_i, 0)
-      right = Math.min((Math.max(x0, x1) + reach).ceil.to_i, @width - 1)
-      top = Math.max((Math.min(y0, y1) - reach).floor.to_i, 0)
+      half   = Math.max(thickness, 0.5) / 2.0
+      reach  = half + 1.0
+      left   = Math.max((Math.min(x0, x1) - reach).floor.to_i, 0)
+      right  = Math.min((Math.max(x0, x1) + reach).ceil.to_i, @width - 1)
+      top    = Math.max((Math.min(y0, y1) - reach).floor.to_i, 0)
       bottom = Math.min((Math.max(y0, y1) + reach).ceil.to_i, @height - 1)
       return if left > right || top > bottom
-      dx = x1 - x0
-      dy = y1 - y0
+      dx     = x1 - x0
+      dy     = y1 - y0
       length = dx * dx + dy * dy
-      row = top
+      row    = top
       while row <= bottom
-        py = row + 0.5
+        py  = row + 0.5
         col = left
         while col <= right
-          px = col + 0.5
+          px    = col + 0.5
           along = length > 0.0 ? (((px - x0) * dx + (py - y0) * dy) / length).clamp(0.0, 1.0) : 0.0
-          ex = x0 + along * dx - px
-          ey = y0 + along * dy - py
-          gap = Math.sqrt(ex * ex + ey * ey)
+          ex    = x0 + along * dx - px
+          ey    = y0 + along * dy - py
+          gap   = Math.sqrt(ex * ex + ey * ey)
           cover = (half + 0.5 - gap).clamp(0.0, 1.0)
           blend(col, row, rgba, cover.to_f32) if cover > 0.0
           col += 1
@@ -133,15 +133,15 @@ module Asekii::Render
 
     def disc(cx : Float64, cy : Float64, radius : Float64, rgba : UInt32) : Nil
       return unless cx.finite? && cy.finite? && radius > 0.0
-      left = Math.max((cx - radius - 1.0).floor.to_i, 0)
-      right = Math.min((cx + radius + 1.0).ceil.to_i, @width - 1)
-      top = Math.max((cy - radius - 1.0).floor.to_i, 0)
+      left   = Math.max((cx - radius - 1.0).floor.to_i, 0)
+      right  = Math.min((cx + radius + 1.0).ceil.to_i, @width - 1)
+      top    = Math.max((cy - radius - 1.0).floor.to_i, 0)
       bottom = Math.min((cy + radius + 1.0).ceil.to_i, @height - 1)
-      row = top
+      row    = top
       while row <= bottom
         col = left
         while col <= right
-          gap = Math.hypot(col + 0.5 - cx, row + 0.5 - cy)
+          gap   = Math.hypot(col + 0.5 - cx, row + 0.5 - cy)
           cover = (radius + 0.5 - gap).clamp(0.0, 1.0)
           blend(col, row, rgba, cover.to_f32) if cover > 0.0
           col += 1
@@ -153,22 +153,22 @@ module Asekii::Render
     def arc(cx : Float64, cy : Float64, radius : Float64, thickness : Float64, start : Float64, sweep : Float64,
             rgba : UInt32) : Nil
       return unless radius > 0.0 && sweep != 0.0
-      half = thickness / 2.0
-      outer = radius + half + 1.0
-      left = Math.max((cx - outer).floor.to_i, 0)
-      right = Math.min((cx + outer).ceil.to_i, @width - 1)
-      top = Math.max((cy - outer).floor.to_i, 0)
+      half   = thickness / 2.0
+      outer  = radius + half + 1.0
+      left   = Math.max((cx - outer).floor.to_i, 0)
+      right  = Math.min((cx + outer).ceil.to_i, @width - 1)
+      top    = Math.max((cy - outer).floor.to_i, 0)
       bottom = Math.min((cy + outer).ceil.to_i, @height - 1)
-      turn = Math::PI * 2
-      span = sweep.abs.clamp(0.0, turn)
+      turn   = Math::PI * 2
+      span   = sweep.abs.clamp(0.0, turn)
       origin = sweep < 0.0 ? start + sweep : start
-      row = top
+      row    = top
       while row <= bottom
         col = left
         while col <= right
-          px = col + 0.5 - cx
-          py = row + 0.5 - cy
-          gap = (Math.hypot(px, py) - radius).abs
+          px    = col + 0.5 - cx
+          py    = row + 0.5 - cy
+          gap   = (Math.hypot(px, py) - radius).abs
           cover = (half + 0.5 - gap).clamp(0.0, 1.0)
           if cover > 0.0
             angle = (Math.atan2(py, px) - origin) % turn
@@ -204,26 +204,26 @@ module Asekii::Render
 
     def self.changes(fresh : Bytes, stale : Bytes, width : Int32, within : Rect, channels : Int32) : Rect?
       stride = within.width * channels
-      top = -1
+      top    = -1
       bottom = -1
       within.height.times do |step|
         at = ((within.y + step) * width + within.x) * channels
         next if fresh[at, stride] == stale[at, stride]
-        top = within.y + step if top < 0
+        top    = within.y + step if top < 0
         bottom = within.y + step
       end
       return nil if top < 0
-      left = within.x + within.width
+      left  = within.x + within.width
       right = within.x - 1
       (top..bottom).each do |row|
         base = row * width * channels
-        col = within.x
+        col  = within.x
         while col < left
           break unless same?(fresh, stale, base + col * channels, channels)
           col += 1
         end
         left = col if col < left
-        col = within.x + within.width - 1
+        col  = within.x + within.width - 1
         while col > right
           break unless same?(fresh, stale, base + col * channels, channels)
           col -= 1
@@ -235,11 +235,11 @@ module Asekii::Render
 
     def self.regions(fresh : Bytes, stale : Bytes, width : Int32, height : Int32, channels : Int32,
                      tile : Int32 = TILE, limit : Int32 = REGIONS) : Array(Rect)
-      whole = changes(fresh, stale, width, Rect.new(0, 0, width, height), channels) || return [] of Rect
-      tile = Math.max(tile, 1)
+      whole  = changes(fresh, stale, width, Rect.new(0, 0, width, height), channels) || return [] of Rect
+      tile   = Math.max(tile, 1)
       across = (width + tile - 1) // tile
-      down = (height + tile - 1) // tile
-      dirty = Slice(Bool).new(across * down, false)
+      down   = (height + tile - 1) // tile
+      dirty  = Slice(Bool).new(across * down, false)
       (whole.y...whole.y + whole.height).each do |row|
         base = row * width * channels
         band = (row // tile) * across
@@ -247,14 +247,14 @@ module Asekii::Render
           next if dirty.unsafe_fetch(band + column)
           left = column * tile
           span = Math.min(tile, width - left) * channels
-          at = base + left * channels
+          at   = base + left * channels
           dirty.unsafe_put(band + column, true) unless fresh[at, span] == stale[at, span]
         end
       end
-      open = [] of Rect
+      open  = [] of Rect
       found = [] of Rect
       down.times do |band|
-        runs = [] of Rect
+        runs   = [] of Rect
         column = 0
         while column < across
           unless dirty.unsafe_fetch(band * across + column)
@@ -283,7 +283,7 @@ module Asekii::Render
       return [whole] if found.size > limit
       rects = found.compact_map do |cells|
         left = cells.x * tile
-        top = cells.y * tile
+        top  = cells.y * tile
         span = Rect.new(left, top, Math.min(cells.width * tile, width - left), Math.min(cells.height * tile, height - top))
         changes(fresh, stale, width, span, channels)
       end
@@ -302,7 +302,7 @@ module Asekii::Render
     def shift(other : Bitmap, limit : Int32) : Int32?
       return nil unless other.width == @width && other.height == @height
       (1..Math.min(limit, @width - 1)).each do |step|
-        kept = (@width - step) * 4
+        kept  = (@width - step) * 4
         match = true
         @height.times do |row|
           base = row * @width * 4

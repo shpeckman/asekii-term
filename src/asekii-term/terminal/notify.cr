@@ -1,4 +1,4 @@
-# src/asekii/terminal/notify.cr
+# src/asekii-term/terminal/notify.cr
 module Asekii::Event
   record Notification, kind : Kind, id : String, button : Int32 = 0, untracked : Bool = false do
     enum Kind
@@ -30,7 +30,7 @@ class Asekii::Terminal
   NOTIFY_OSC9 = {"iterm", "ghostty", "wezterm"}
   CONTROLS    = /[\x{00}-\x{1f}\x{7f}-\x{9f}]/
 
-  @icons = Set(String).new
+  @icons    = Set(String).new
   @notifier = Atomic(Int32).new(-1)
 
   def notify_protocol(limit : Time::Span = @config.query_timeout) : NotifyProtocol
@@ -51,10 +51,10 @@ class Asekii::Terminal
   end
 
   def notify(notice : Notice) : String
-    id = ident(notice.id || UUID.random.to_s)
+    id       = ident(notice.id || UUID.random.to_s)
     protocol = notify_protocol
     return plain_notify(id, notice, protocol) unless protocol.kitty?
-    cache = notice.icon_key.try { |key| ident(key) }
+    cache   = notice.icon_key.try { |key| ident(key) }
     actions = "#{"report," if notice.report}#{"-" unless notice.focus}focus"
     meta = Asekii::Terminal.build do |wire|
       wire.str("i=").str(id)
@@ -118,7 +118,7 @@ class Asekii::Terminal
 
   private def plain_notify(id : String, notice : Notice, protocol : NotifyProtocol) : String
     title = notice.title.gsub(CONTROLS, ' ')
-    body = notice.body.gsub(CONTROLS, ' ')
+    body  = notice.body.gsub(CONTROLS, ' ')
     sequence = Asekii::Terminal.build do |wire|
       if protocol.osc9?
         wire.osc(9).str(title.empty? ? body : body.empty? ? title : "#{title}: #{body}").st

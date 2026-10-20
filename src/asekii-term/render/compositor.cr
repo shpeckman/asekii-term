@@ -1,4 +1,4 @@
-# src/asekii/render/compositor.cr
+# src/asekii-term/render/compositor.cr
 module Asekii::Render
   class ::Bytewire
     def cursor_at(row : Int32, col : Int32) : self
@@ -28,55 +28,55 @@ module Asekii::Render
     LEAVE         = "\e[0m\e[0 q\e[?25h"
 
     SGR = [
-      {Attr::Bold, "1", 22},
-      {Attr::Dim, "2", 22},
-      {Attr::Italic, "3", 23},
-      {Attr::Underline, "4", 24},
+      {Attr::Bold,            "1",   22},
+      {Attr::Dim,             "2",   22},
+      {Attr::Italic,          "3",   23},
+      {Attr::Underline,       "4",   24},
       {Attr::DoubleUnderline, "4:2", 24},
-      {Attr::CurlyUnderline, "4:3", 24},
+      {Attr::CurlyUnderline,  "4:3", 24},
       {Attr::DottedUnderline, "4:4", 24},
       {Attr::DashedUnderline, "4:5", 24},
-      {Attr::Blink, "5", 25},
-      {Attr::Reverse, "7", 27},
-      {Attr::Conceal, "8", 28},
-      {Attr::Strike, "9", 29},
-      {Attr::Overline, "53", 55},
+      {Attr::Blink,           "5",   25},
+      {Attr::Reverse,         "7",   27},
+      {Attr::Conceal,         "8",   28},
+      {Attr::Strike,          "9",   29},
+      {Attr::Overline,        "53",  55},
     ]
 
-    getter pile : Pile
-    getter root : Plane
+    getter pile         : Pile
+    getter root         : Plane
     getter cursor_shape : CursorShape?
     getter cursor_blink : Bool
-    getter blend : BlendSpace
-    getter images : ImageProtocol
+    getter blend        : BlendSpace
+    getter images       : ImageProtocol
 
     property themes : Themes
 
     @pen : Tile
 
     def initialize
-      @pile = Pile.new(FALLBACK_COLS, FALLBACK_ROWS)
-      @root = @pile.plane(FALLBACK_COLS, FALLBACK_ROWS)
-      @front = Slice(Tile).new(FALLBACK_COLS * FALLBACK_ROWS, Tile::VOID)
-      @thin = Slice(Bool).new(FALLBACK_COLS * FALLBACK_ROWS, false)
-      @erased = Slice(Int32).new(FALLBACK_ROWS, FALLBACK_COLS)
-      @erasing = false
-      @painters = [] of Compositor -> Nil
-      @outbox = [] of String
-      @themes = Themes.new
-      @blend = BlendSpace::Linear
+      @pile         = Pile.new(FALLBACK_COLS, FALLBACK_ROWS)
+      @root         = @pile.plane(FALLBACK_COLS, FALLBACK_ROWS)
+      @front        = Slice(Tile).new(FALLBACK_COLS * FALLBACK_ROWS, Tile::VOID)
+      @thin         = Slice(Bool).new(FALLBACK_COLS * FALLBACK_ROWS, false)
+      @erased       = Slice(Int32).new(FALLBACK_ROWS, FALLBACK_COLS)
+      @erasing      = false
+      @painters     = [] of Compositor -> Nil
+      @outbox       = [] of String
+      @themes       = Themes.new
+      @blend        = BlendSpace::Linear
       @cursor_shape = nil
       @cursor_blink = true
-      @images = ImageProtocol::Kitty
-      @sync = false
-      @open = false
-      @col = -1
-      @row = -1
-      @pen = Tile::BLANK
-      @caret_on = false
-      @caret_col = -1
-      @caret_row = -1
-      @caret_code = 0
+      @images       = ImageProtocol::Kitty
+      @sync         = false
+      @open         = false
+      @col          = -1
+      @row          = -1
+      @pen          = Tile::BLANK
+      @caret_on     = false
+      @caret_col    = -1
+      @caret_row    = -1
+      @caret_code   = 0
       @pile.merger = ->(under : Paint, over : Paint) { fuse(under, over) }
     end
 
@@ -94,10 +94,10 @@ module Asekii::Render
       target.str("\e[0m")
       target.str("\e[0 q") if @caret_code > 0
       target.str("\e[?25h")
-      @caret_on = false
+      @caret_on   = false
       @caret_code = 0
-      @caret_col = -1
-      @caret_row = -1
+      @caret_col  = -1
+      @caret_row  = -1
     end
 
     def cols : Int32
@@ -194,7 +194,7 @@ module Asekii::Render
 
     def images=(images : ImageProtocol) : ImageProtocol
       unless images == @images
-        inline = images.inline? || @images.inline?
+        inline  = images.inline? || @images.inline?
         @images = images
         invalidate if inline
       end
@@ -230,13 +230,13 @@ module Asekii::Render
     def resize(cols : Int32, rows : Int32) : Nil
       unless cols == @pile.cols && rows == @pile.rows
         @pile.resize(cols, rows)
-        @front = Slice(Tile).new(@pile.cols * @pile.rows, Tile::VOID)
-        @thin = Slice(Bool).new(@pile.cols * @pile.rows, false)
-        @erased = Slice(Int32).new(@pile.rows, @pile.cols)
+        @front   = Slice(Tile).new(@pile.cols * @pile.rows, Tile::VOID)
+        @thin    = Slice(Bool).new(@pile.cols * @pile.rows, false)
+        @erased  = Slice(Int32).new(@pile.rows, @pile.cols)
         @erasing = false
         @root.resize(cols, rows)
       end
-      @caret_on = false
+      @caret_on   = false
       @caret_code = 0
       invalidate
     end
@@ -311,14 +311,14 @@ module Asekii::Render
     private def shift(target : Bytewire) : Nil
       return if @pile.shifts.empty? || !@pile.sprites.empty?
       tiles = @pile.tiles
-      cols = @pile.cols
+      cols  = @pile.cols
       @pile.shifts.each do |hint|
         count = hint.lines.abs
         moved = hint.bottom - hint.top - count
         next if moved < SHIFT_MIN || !steady?(hint, cols)
         match = 0
         moved.times do |step|
-          to = hint.lines > 0 ? hint.top + step : hint.top + count + step
+          to   = hint.lines > 0 ? hint.top + step : hint.top + count + step
           from = hint.lines > 0 ? to + count : to - count
           match += 1 if alike?(tiles[to * cols, cols], @front[from * cols, cols])
         end
@@ -356,15 +356,15 @@ module Asekii::Render
 
     private def emit(target : Bytewire) : Nil
       tiles = @pile.tiles
-      cols = @pile.cols
-      row = 0
+      cols  = @pile.cols
+      row   = 0
       while row < @pile.rows
         low, high = @pile.span(row)
         tail = -1
-        col = low
+        col  = low
         while col < high
           index = row * cols + col
-          back = tiles.unsafe_fetch(index)
+          back  = tiles.unsafe_fetch(index)
           if back.same?(@front.unsafe_fetch(index))
             col += 1
             next
@@ -405,7 +405,7 @@ module Asekii::Render
     end
 
     private def unveil : Nil
-      cols = @pile.cols
+      cols  = @pile.cols
       tiles = @pile.tiles
       @pile.retired.each do |sprite|
         next unless inline?(sprite)
@@ -415,7 +415,7 @@ module Asekii::Render
       @pile.sprites.each do |sprite|
         next unless inline?(sprite)
         placed = sprite.placed
-        spot = sprite.live
+        spot   = sprite.live
         if placed && placed != spot
           expose(placed)
           sprite.placed = nil
@@ -429,7 +429,7 @@ module Asekii::Render
 
     private def expose(spot : Sprite::Placement) : Nil
       cols = @pile.cols
-      top = spot.row.clamp(0, @pile.rows)
+      top  = spot.row.clamp(0, @pile.rows)
       stop = (spot.row + spot.rows).clamp(0, @pile.rows)
       left = spot.col.clamp(0, cols)
       wide = (spot.col + spot.cols).clamp(0, cols) - left
@@ -455,7 +455,7 @@ module Asekii::Render
 
     private def bare?(spot : Sprite::Placement) : Bool
       tiles = @pile.tiles
-      cols = @pile.cols
+      cols  = @pile.cols
       (spot.row...spot.row + spot.rows).each do |row|
         (spot.col...spot.col + spot.cols).each do |col|
           tile = tiles.unsafe_fetch(row * cols + col)
@@ -481,9 +481,9 @@ module Asekii::Render
 
     private def ink(sprite : Sprite, spot : Sprite::Placement) : String?
       raster = sprite.picture || return
-      width = cell_width
+      width  = cell_width
       height = cell_height
-      key = {spot, @images, width, height}
+      key    = {spot, @images, width, height}
       return sprite.ink if sprite.inked == key
       piece = spot.cropped? ? raster.crop(spot.left, spot.top, spot.width, spot.height) : raster
       code = if @images.sixel?
@@ -544,9 +544,9 @@ module Asekii::Render
           target.cursor_at(row, col)
           target.csi.int(code).str(" q") unless code == @caret_code
           target.str("\e[?25h") unless @caret_on
-          @caret_on = true
-          @caret_col = col
-          @caret_row = row
+          @caret_on   = true
+          @caret_col  = col
+          @caret_row  = row
           @caret_code = code
         end
       elsif @caret_on
@@ -562,9 +562,9 @@ module Asekii::Render
     private def start(target : Bytewire) : Nil
       return if @open
       @open = true
-      @col = -1
-      @row = -1
-      @pen = Tile::BLANK
+      @col  = -1
+      @row  = -1
+      @pen  = Tile::BLANK
       target.str("\e[?2026h") if sync?
       target.str("\e[?25l") if @caret_on
       target.str("\e[0m")
@@ -629,7 +629,7 @@ module Asekii::Render
     private def joins?(tile : Tile, index : Int32) : Bool
       left = @front.unsafe_fetch(index - 1)
       return false unless left.exact? && left.styled?(tile)
-      here = Placeholder.of(tile.glyph) || return false
+      here  = Placeholder.of(tile.glyph) || return false
       there = Placeholder.of(left.glyph) || return false
       here.follows?(there)
     end

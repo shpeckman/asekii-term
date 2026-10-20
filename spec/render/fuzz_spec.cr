@@ -7,10 +7,10 @@ class Glass
   getter cells : Array(String)
 
   def initialize(@cols : Int32, @rows : Int32)
-    @cells = Array.new(@cols * @rows, " ")
-    @col = 0
-    @row = 0
-    @top = 0
+    @cells  = Array.new(@cols * @rows, " ")
+    @col    = 0
+    @row    = 0
+    @top    = 0
     @bottom = @rows
   end
 
@@ -112,18 +112,18 @@ end
 
 describe Asekii::Render::Compositor do
   it "leaves the terminal matching the composed frame after random updates" do
-    cols = 24
-    rows = 8
+    cols   = 24
+    rows   = 8
     random = Random.new(20261003)
-    words = ["ab", "日本", "x", "hello", "wide字", "  ", "Zz"]
-    stage = Engine.new(cols, rows)
+    words  = ["ab", "日本", "x", "hello", "wide字", "  ", "Zz"]
+    stage  = Engine.new(cols, rows)
     screen = Glass.new(cols, rows)
-    log = stage.plane(cols, 6, 0, 1)
+    log    = stage.plane(cols, 6, 0, 1)
     6.times { |row| log.put(0, row, "log line #{row}") }
     planes = Array.new(4) do
       stage.plane(random.rand(3..14), random.rand(1..5), random.rand(-3..20), random.rand(-2..7))
     end
-    links = [nil, "https://a.example", "https://b.example"]
+    links  = [nil, "https://a.example", "https://b.example"]
     shifts = 0
     600.times do
       plane = planes.sample(random)

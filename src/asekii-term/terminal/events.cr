@@ -1,4 +1,4 @@
-# src/asekii/terminal/events.cr
+# src/asekii-term/terminal/events.cr
 module Asekii::Event
   @[Flags]
   enum Mods : UInt8
@@ -13,11 +13,11 @@ module Asekii::Event
   end
 
   enum Named
-    Tab         =     9
-    Enter       =    13
-    Escape      =    27
-    Backspace   =   127
-    Insert      = 57348
+    Tab       =     9
+    Enter     =    13
+    Escape    =    27
+    Backspace =   127
+    Insert    = 57348
     Delete
     Left
     Right

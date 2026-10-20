@@ -165,9 +165,9 @@ describe Asekii::Render::Themes do
     stage = Engine.new
     themed(stage)
     stage.themes.use(:dark)
-    cs = Asekii::Render::ColorSpace
+    cs     = Asekii::Render::ColorSpace
     accent = stage.themes.resolve(Asekii::Render::Roles::Core::Accent.value)
-    rgb = Asekii::Render::Pile.rgb(accent, stage.themes.palette)
+    rgb    = Asekii::Render::Pile.rgb(accent, stage.themes.palette)
     l, c, h = cs.oklch(rgb)
 
     light = stage.themes.resolve_spec(Asekii::Render::Adjust.lighten(:accent, 0.1), stage.themes.palette)
@@ -195,7 +195,7 @@ describe Asekii::Render::Themes do
     end
     stage.themes.use(:nested)
     base = stage.themes.resolve(Asekii::Render::Roles.slot(:base))
-    top = stage.themes.resolve(Asekii::Render::Roles.slot(:top))
+    top  = stage.themes.resolve(Asekii::Render::Roles.slot(:top))
     base.kind.should eq(Asekii::Render::Paint::Kind::RGB)
     top.kind.should eq(Asekii::Render::Paint::Kind::RGB)
     Asekii::Render::ColorSpace.oklch(top.value)[0].should be < Asekii::Render::ColorSpace.oklch(base.value)[0]
@@ -212,7 +212,7 @@ describe Asekii::Render::Themes do
   end
 
   it "meets its contrast targets across palettes" do
-    cs = Asekii::Render::ColorSpace
+    cs    = Asekii::Render::ColorSpace
     stage = Engine.new
     stage.themes.define(:solarized, base16: SOLARIZED_DARK16, fg: 0x93a1a1, bg: 0x002b36)
     stage.themes.define(:light, base16: LIGHT16, fg: 0x4c4f69, bg: 0xeff1f5)
@@ -222,8 +222,8 @@ describe Asekii::Render::Themes do
       stage.themes.use(name)
       palette = stage.themes.palette
       surface = palette.bg
-      text = palette.fg
-      accent = Asekii::Render::Pile.rgb(stage.themes.resolve(Asekii::Render::Roles::Core::Accent.value), palette)
+      text    = palette.fg
+      accent  = Asekii::Render::Pile.rgb(stage.themes.resolve(Asekii::Render::Roles::Core::Accent.value), palette)
 
       on_accent = Asekii::Render::Pile.rgb(stage.themes.resolve(Asekii::Render::Roles::Core::OnAccent.value), palette)
       cs.contrast(on_accent, accent).should be >= 3.0
@@ -247,10 +247,10 @@ describe Asekii::Render::Themes do
   end
 
   it "animates a transition and finishes on the target palette" do
-    stage = Engine.new
+    stage  = Engine.new
     themes = stage.themes
-    watch = watching(themes)
-    ticks = ticking(themes)
+    watch  = watching(themes)
+    ticks  = ticking(themes)
     themes.depth = Asekii::Render::ColorDepth::TrueColor
     themes.define(:dark, base16: DARK16, fg: 0xcdd6f4, bg: 0x1e1e2e)
     themes.define(:light, base16: LIGHT16, fg: 0x4c4f69, bg: 0xeff1f5)
@@ -272,9 +272,9 @@ describe Asekii::Render::Themes do
   end
 
   it "collapses a transition when it cannot animate" do
-    stage = Engine.new
+    stage  = Engine.new
     themes = stage.themes
-    watch = watching(themes)
+    watch  = watching(themes)
     themes.depth = Asekii::Render::ColorDepth::Indexed256
     themes.delivery = Asekii::Render::ThemeDelivery::Local
     themes.define(:dark, base16: DARK16, fg: 0xcdd6f4, bg: 0x1e1e2e)
@@ -287,10 +287,10 @@ describe Asekii::Render::Themes do
   end
 
   it "follows the system scheme with the default duration while running" do
-    stage = Engine.new
+    stage  = Engine.new
     themes = stage.themes
-    watch = watching(themes)
-    ticks = ticking(themes)
+    watch  = watching(themes)
+    ticks  = ticking(themes)
     themes.depth = Asekii::Render::ColorDepth::TrueColor
     themes.duration = 40.milliseconds
     themes.define(:dark, base16: DARK16, fg: 0xcdd6f4, bg: 0x1e1e2e)

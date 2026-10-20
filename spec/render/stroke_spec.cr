@@ -8,12 +8,12 @@ private alias Space = Asekii::Render::ColorSpace
 
 private def payloads(wire : String) : Hash(UInt32, Bytes)
   images = {} of UInt32 => Bytes
-  id = 0_u32
-  data = IO::Memory.new
+  id     = 0_u32
+  data   = IO::Memory.new
   wire.scan(/\e_G([^;\e]*);([^\e]*)\e\\/) do |match|
     keys = match[1].split(',').to_h { |pair| {pair[0, 1], pair[2..]} }
     if keys["a"]? == "T"
-      id = keys["i"].to_u32
+      id   = keys["i"].to_u32
       data = IO::Memory.new
     end
     data.write(Base64.decode(match[2]))
@@ -105,10 +105,10 @@ describe Asekii::Render::Stroke do
   end
 
   it "mirrors corners and keeps the stroke continuous with the edges" do
-    edge = Stroke.new(Stroke::Piece::Top, width: 3).mask(9, 18)
-    side = Stroke.new(Stroke::Piece::Left, width: 3).mask(9, 18)
+    edge  = Stroke.new(Stroke::Piece::Top, width: 3).mask(9, 18)
+    side  = Stroke.new(Stroke::Piece::Left, width: 3).mask(9, 18)
     sharp = Stroke.new(Stroke::Piece::TopRight, width: 3).mask(9, 18)
-    left = Stroke.new(Stroke::Piece::TopLeft, round: true, width: 3).mask(9, 18)
+    left  = Stroke.new(Stroke::Piece::TopLeft, round: true, width: 3).mask(9, 18)
     right = Stroke.new(Stroke::Piece::TopRight, round: true, width: 3).mask(9, 18)
     18.times do |y|
       coverage(sharp, 9, 0, y)[0].should eq(coverage(edge, 9, 0, y)[0])
@@ -226,7 +226,7 @@ describe Asekii::Render::StrokeImages do
   it "tiles a branch shape like any other stroke and letters it until the cell size is known" do
     stage = Engine.new(2, 1)
     plane = stage.plane(2, 1)
-    node = Stroke.branch('\u{F5FC}').not_nil!
+    node  = Stroke.branch('\u{F5FC}').not_nil!
     plane.stroke(0, 0, node, "#ffffff")
     stage.frame.should contain("●")
     stage.compositor.cell_pixels(8, 16)
@@ -242,7 +242,7 @@ describe Asekii::Render::StrokeImages do
     stage.compositor.cell_pixels(4, 8)
     plane = stage.plane(3, 1)
     plane.stroke(1, 0, Stroke.new(Stroke::Piece::Top, width: 2), "#ff0000", "#0000ff")
-    wire = stage.frame
+    wire  = stage.frame
     first = Asekii::Render::StrokeImages::FIRST
     wire.should contain("\e_Ga=T,U=1,q=2,o=z,f=32,s=4,v=8,i=#{first},c=1,r=1;")
     wire.should_not contain("N=1")
@@ -265,7 +265,7 @@ describe Asekii::Render::StrokeImages do
     stage.compositor.indexed_tiles = true
     plane = stage.plane(3, 1)
     plane.stroke(1, 0, Stroke.new(Stroke::Piece::Top, width: 2), 3, "#0000ff")
-    wire = stage.frame
+    wire  = stage.frame
     first = Asekii::Render::StrokeImages::FIRST
     wire.should contain("\e_Ga=T,U=1,q=2,o=z,f=16,s=4,v=8,i=#{first},c=1,r=1;")
     tile = stage.at(1, 0)
@@ -377,12 +377,12 @@ describe Asekii::Render::StrokeImages do
     high.stroke(0, 0, Stroke.new(Stroke::Piece::Left, width: 2, fill: Stroke::Fill::Inside), "#ff0000", "#ffffff")
     high.opacity = 0.5
     stage.compositor.exact_borders = true
-    wire = stage.frame
-    data = payloads(wire)[stage.at(0, 0).fg]
+    wire  = stage.frame
+    data  = payloads(wire)[stage.at(0, 0).fg]
     level = 128 / 255.0_f32
     black = linear(0x000000_u32)
-    fill = Space.lerp(black, linear(0xffffff_u32), level)
-    red = linear(0xff0000_u32)
+    fill  = Space.lerp(black, linear(0xffffff_u32), level)
+    red   = linear(0xff0000_u32)
     pixel(data, 4, 0, 2).should eq(0x000000_u32)
     pixel(data, 4, 3, 2).should eq(shown(fill))
     stage.at(0, 0).bg.should eq(0x000000_u32)
@@ -399,11 +399,11 @@ describe Asekii::Render::StrokeImages do
     mid.stroke(0, 0, Stroke.new(Stroke::Piece::Left, width: 2, fill: Stroke::Fill::None), "#ffffff")
     scrim = stage.plane(2, 1)
     scrim.fill(bg: {"#0000ff", 0.5})
-    wire = stage.frame
-    data = payloads(wire)[stage.at(0, 0).fg]
+    wire  = stage.frame
+    data  = payloads(wire)[stage.at(0, 0).fg]
     level = 128 / 255.0_f32
-    blue = linear(0x0000ff_u32)
-    keep = 1.0_f32 - level
+    blue  = linear(0x0000ff_u32)
+    keep  = 1.0_f32 - level
     tint = ->(color : UInt32) {
       base = linear(color)
       shown({level * blue[0] + keep * base[0], level * blue[1] + keep * base[1], level * blue[2] + keep * base[2]})
@@ -476,7 +476,7 @@ describe Asekii::Render::StrokeImages do
     plane = stage.plane(1, 1)
     plane.stroke(0, 0, Stroke.new(Stroke::Piece::Top), "#ffffff")
     stage.frame
-    id = stage.at(0, 0).fg
+    id   = stage.at(0, 0).fg
     wire = Bytewire.new
     stage.compositor.leave(wire)
     id.should eq(Asekii::Render::StrokeImages::FIRST)
@@ -486,8 +486,8 @@ describe Asekii::Render::StrokeImages do
 end
 describe "Asekii::Render::Stroke tones" do
   it "strips its tones to the shape it shares a mask with" do
-    tones = Stroke::Tones.sides(Asekii::Render::Paint.rgb(0xff0000_u32), Asekii::Render::Paint.rgb(0x0000ff_u32))
-    plain = Stroke.new(arms: Stroke::VERTICAL)
+    tones  = Stroke::Tones.sides(Asekii::Render::Paint.rgb(0xff0000_u32), Asekii::Render::Paint.rgb(0x0000ff_u32))
+    plain  = Stroke.new(arms: Stroke::VERTICAL)
     tinted = Stroke.new(arms: Stroke::VERTICAL, tones: tones)
     plain.tinted?.should be_false
     tinted.tinted?.should be_true
@@ -500,9 +500,9 @@ describe "Asekii::Render::Stroke tones" do
     tones = Stroke::Tones.new(Asekii::Render::Paint.rgb(1_u32), Asekii::Render::Paint.rgb(2_u32),
       Asekii::Render::Paint.rgb(3_u32), Asekii::Render::Paint.rgb(4_u32))
     stroke = Stroke.new(arms: Stroke::HORIZONTAL, width: 2, fill: Stroke::Corner::SouthWest | Stroke::Corner::SouthEast, tones: tones)
-    cover = stroke.quarters(4, 8)
-    mask = stroke.mask(4, 8)
-    top = 0
+    cover  = stroke.quarters(4, 8)
+    mask   = stroke.mask(4, 8)
+    top    = 0
     bottom = (7 * 4 + 0) * 5
     cover[top + 1, 4].to_a.should eq([0_u8, 0_u8, 0_u8, 0_u8])
     cover[bottom + 1, 4].to_a.should eq([0_u8, 0_u8, 255_u8, 0_u8])
@@ -558,13 +558,13 @@ describe "Asekii::Render::Stroke tones" do
     stage.compositor.exact_borders = true
     low = stage.plane(2, 1)
     low.fill(bg: "#000000")
-    high = stage.plane(2, 1)
+    high  = stage.plane(2, 1)
     tones = Stroke::Tones.sides(Asekii::Render::Paint.rgb(0xff0000_u32), Asekii::Render::Paint.rgb(0x0000ff_u32))
     high.stroke(0, 0, Stroke.new(arms: Stroke::VERTICAL, width: 2, tones: tones), "#ffffff")
     high.opacity = 0.5
     wire = stage.frame
     wire.should contain("f=24,s=4,v=8,")
-    data = payloads(wire)[stage.at(0, 0).fg]
+    data  = payloads(wire)[stage.at(0, 0).fg]
     level = 128 / 255.0_f32
     black = linear(0x000000_u32)
     pixel(data, 4, 0, 4).should eq(shown(Space.lerp(black, linear(0xff0000_u32), level)))
@@ -586,7 +586,7 @@ describe "Asekii::Render::Stroke tones" do
   it "draws a double line as two crisp rails that meet at corners and junctions" do
     corner = Stroke.new(arms: Stroke::Arm::East | Stroke::Arm::South, line: Stroke::Line::Double)
     corner.glyph.should eq('╔')
-    mask = corner.mask(10, 20)
+    mask  = corner.mask(10, 20)
     inked = ->(x : Int32, y : Int32) { mask[(y * 10 + x) * 2] == 255_u8 }
     (0...200).all? { |index| mask[index * 2] == 0_u8 || mask[index * 2] == 255_u8 }.should be_true
     {inked.call(3, 8), inked.call(9, 8), inked.call(3, 19), inked.call(7, 12), inked.call(9, 12), inked.call(7, 19)}.all?.should be_true

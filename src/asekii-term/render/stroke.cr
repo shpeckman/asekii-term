@@ -1,4 +1,4 @@
-# src/asekii/render/stroke.cr
+# src/asekii-term/render/stroke.cr
 module Asekii::Render
   struct Stroke
     enum Piece : UInt8
@@ -191,31 +191,31 @@ module Asekii::Render
       table
     end
 
-    getter arms : Arm
-    getter bends : Corner
-    getter node : Node
-    getter fade : Fade
-    getter fill : Corner
+    getter arms   : Arm
+    getter bends  : Corner
+    getter node   : Node
+    getter fade   : Fade
+    getter fill   : Corner
     getter mirror : Mirror
-    getter tones : Tones
-    getter width : UInt8
-    getter x : UInt8
-    getter y : UInt8
-    getter line : Line
+    getter tones  : Tones
+    getter width  : UInt8
+    getter x      : UInt8
+    getter y      : UInt8
+    getter line   : Line
 
     def initialize(*, @arms : Arm = Arm::None, @bends : Corner = Corner::None, @node : Node = Node::None,
                    @fade : Fade = Fade::None, @fill : Corner = Corner::All, width : Int = 1,
                    position : Float64 = 0.5, x : Float64 = position, y : Float64 = position,
                    @mirror : Mirror = Mirror::None, @tones : Tones = Tones::NONE, @line : Line = Line::Light)
       @width = width.clamp(1, 255).to_u8
-      @x = Stroke.place(x)
-      @y = Stroke.place(y)
+      @x     = Stroke.place(x)
+      @y     = Stroke.place(y)
       settle
     end
 
     def self.new(piece : Piece, round : Bool = false, width : Int = 1, position : Float64 = 0.5,
                  fill : Fill = Fill::Cell) : Stroke
-      shape = PIECES.unsafe_fetch(piece.value)
+      shape  = PIECES.unsafe_fetch(piece.value)
       curved = round && !shape.bend.none?
       new(arms: curved ? Arm::None : shape.arms, bends: curved ? shape.bend : Corner::None,
         fill: region(fill, shape.inside), width: width, position: position, mirror: shape.mirror)
@@ -297,7 +297,7 @@ module Asekii::Render
     def_equals_and_hash arms, bends, node, fade, fill, mirror, tones, width, x, y, line
 
     def mask(width : Int32, height : Int32) : Bytes
-      data = Bytes.new(width * height * 2)
+      data  = Bytes.new(width * height * 2)
       total = SAMPLES * SAMPLES
       index = 0
       sample(width, height) do |level, regions|
@@ -311,7 +311,7 @@ module Asekii::Render
     end
 
     def quarters(width : Int32, height : Int32) : Bytes
-      data = Bytes.new(width * height * 5)
+      data  = Bytes.new(width * height * 5)
       total = SAMPLES * SAMPLES
       index = 0
       sample(width, height) do |level, regions|
@@ -329,31 +329,31 @@ module Asekii::Render
     end
 
     private def sample(width : Int32, height : Int32, & : UInt8, StaticArray(Int32, 4) ->) : Nil
-      least = Math.min(width, height).to_f32
+      least  = Math.min(width, height).to_f32
       weight = @line.heavy? ? @width.to_f32 * 2.0_f32 : @width.to_f32
-      thick = Math.min(weight, least)
-      half = thick / 2.0_f32
-      gap = @line.double? ? Math.min(Math.max(thick, least / 5.0_f32), Math.max(least / 2.0_f32 - half, 0.0_f32)) : 0.0_f32
+      thick  = Math.min(weight, least)
+      half   = thick / 2.0_f32
+      gap    = @line.double? ? Math.min(Math.max(thick, least / 5.0_f32), Math.max(least / 2.0_f32 - half, 0.0_f32)) : 0.0_f32
       extent = half + gap
-      cx = extent + @x / 255.0_f32 * Math.max(width - 2.0_f32 * extent, 0.0_f32)
-      cy = extent + @y / 255.0_f32 * Math.max(height - 2.0_f32 * extent, 0.0_f32)
+      cx     = extent + @x / 255.0_f32 * Math.max(width - 2.0_f32 * extent, 0.0_f32)
+      cy     = extent + @y / 255.0_f32 * Math.max(height - 2.0_f32 * extent, 0.0_f32)
       if @line.double?
-        cx = (cx - half).round + half
-        cy = (cy - half).round + half
+        cx  = (cx - half).round + half
+        cy  = (cy - half).round + half
         gap = Math.max(gap.round, thick.ceil)
       end
       flip_x = @mirror.x?
       flip_y = @mirror.y?
-      arms = Stroke.turn(@line.double? ? reach : @arms, flip_x, flip_y)
-      arcs = @line.double? ? [] of Arc : arcs(Stroke.turn(@bends, flip_x, flip_y), width, height, cx, cy)
+      arms   = Stroke.turn(@line.double? ? reach : @arms, flip_x, flip_y)
+      arcs   = @line.double? ? [] of Arc : arcs(Stroke.turn(@bends, flip_x, flip_y), width, height, cx, cy)
       radius = Math.min(Math.min(cx, cy), Math.min(width - cx, height - cy))
       fading = !@fade.none?
-      step = 1.0_f32 / SAMPLES
-      total = SAMPLES * SAMPLES
+      step   = 1.0_f32 / SAMPLES
+      total  = SAMPLES * SAMPLES
       height.times do |py|
         width.times do |px|
-          hits = 0
-          shade = 0.0_f32
+          hits    = 0
+          shade   = 0.0_f32
           regions = StaticArray(Int32, 4).new(0)
           SAMPLES.times do |sy|
             y = py + (sy + 0.5_f32) * step
@@ -377,11 +377,11 @@ module Asekii::Render
 
     private def settle : Nil
       unless sideways?
-        @x = CENTRE
+        @x      = CENTRE
         @mirror = @mirror & ~Mirror::X
       end
       unless upright?
-        @y = CENTRE
+        @y      = CENTRE
         @mirror = @mirror & ~Mirror::Y
       end
     end
@@ -407,8 +407,8 @@ module Asekii::Render
         next unless bends.includes?(corner)
         flip_x = corner.south_west? || corner.north_west?
         flip_y = corner.north_east? || corner.north_west?
-        ax = flip_x ? width - cx : cx
-        ay = flip_y ? height - cy : cy
+        ax     = flip_x ? width - cx : cx
+        ay     = flip_y ? height - cy : cy
         radius = Math.min(width - ax, height - ay)
         arcs << Arc.new(corner, flip_x, flip_y, ax, ay, radius, ax + radius, ay + radius)
       end
@@ -440,7 +440,7 @@ module Asekii::Render
              rail(u, cx, v, cy, half, gap, arms.south?, arms.north?, arms.west?, arms.east?)
       elsif !arms.none?
         across = (v - cy).abs <= half
-        along = (u - cx).abs <= half
+        along  = (u - cx).abs <= half
         on = (arms.east? && u >= cx - half && across) || (arms.west? && u <= cx + half && across) ||
              (arms.south? && v >= cy - half && along) || (arms.north? && v <= cy + half && along)
       end
@@ -465,7 +465,7 @@ module Asekii::Render
       unless @node.none?
         reach = Math.sqrt((u - cx) * (u - cx) + (v - cy) * (v - cy))
         inner = radius - thick
-        on = false if @node.hollow? && reach < inner
+        on    = false if @node.hollow? && reach < inner
         on ||= reach <= radius && (@node.filled? || reach >= inner)
       end
       {on && !@line.none?, region}
@@ -478,7 +478,7 @@ module Asekii::Render
       {-1.0_f32, 1.0_f32}.each do |side|
         next unless (across - (centre + side * gap)).abs <= half
         near = side < 0 ? low : high
-        far = side < 0 ? high : low
+        far  = side < 0 ? high : low
         start = if near
                   gap - half
                 elsif far

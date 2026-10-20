@@ -1,4 +1,4 @@
-# src/asekii/render/paint.cr
+# src/asekii-term/render/paint.cr
 require "termwidth"
 
 module Asekii::Render
@@ -83,7 +83,7 @@ module Asekii::Render
       Spec
     end
 
-    getter kind : Kind
+    getter kind  : Kind
     getter value : UInt32
     getter alpha : UInt8
 
@@ -284,13 +284,13 @@ module Asekii::Render
     STROKE = 4_u8
 
     getter glyph : UInt32
-    getter fg : Paint
-    getter bg : Paint
-    getter line : Paint
-    getter link : UInt32
+    getter fg    : Paint
+    getter bg    : Paint
+    getter line  : Paint
+    getter link  : UInt32
     getter attrs : Attr
-    getter span : UInt8
-    getter dx : UInt8
+    getter span  : UInt8
+    getter dx    : UInt8
     getter flags : UInt8
 
     def initialize(@glyph : UInt32 = 0_u32, @fg : Paint = Paint::NONE, @bg : Paint = Paint::NONE,
@@ -353,19 +353,19 @@ module Asekii::Render
     LINES  = Attr::Underline | Attr::DoubleUnderline | Attr::CurlyUnderline | Attr::DottedUnderline |
              Attr::DashedUnderline | Attr::Reverse | Attr::Strike | Attr::Overline
 
-    getter glyph : UInt32
-    getter fg : UInt32
-    getter bg : UInt32
-    getter line : UInt32
-    getter link : UInt32
-    getter attrs : Attr
-    getter fg_kind : Kind
-    getter bg_kind : Kind
+    getter glyph     : UInt32
+    getter fg        : UInt32
+    getter bg        : UInt32
+    getter line      : UInt32
+    getter link      : UInt32
+    getter attrs     : Attr
+    getter fg_kind   : Kind
+    getter bg_kind   : Kind
     getter line_kind : Kind
-    getter span : UInt8
-    getter dx : UInt8
-    getter flags : UInt8
-    getter owner : UInt32
+    getter span      : UInt8
+    getter dx        : UInt8
+    getter flags     : UInt8
+    getter owner     : UInt32
 
     def initialize(@glyph : UInt32 = 0_u32, @fg : UInt32 = 0_u32, @bg : UInt32 = 0_u32,
                    @attrs : Attr = Attr::None, @fg_kind : Kind = Kind::Default,

@@ -1,4 +1,4 @@
-# src/asekii/terminal/passthrough.cr
+# src/asekii-term/terminal/passthrough.cr
 class Asekii::Terminal
   WRAPPED = {
     Multiplexer::Tmux   => Set{9, 21, 22, 72, 99, 777, 1337, 5522, 30001, 30101},
@@ -28,9 +28,9 @@ class Asekii::Terminal
     getter mode : Multiplexer
 
     @phase = Phase::Ground
-    @code = 0
-    @osc = false
-    @held = Bytewire.new(1024)
+    @code  = 0
+    @osc   = false
+    @held  = Bytewire.new(1024)
 
     def self.for(chosen : Multiplexer) : Passthrough?
       mode = chosen
@@ -51,7 +51,7 @@ class Asekii::Terminal
     end
 
     def pass(bytes : Bytes, io : IO) : Nil
-      size = bytes.size
+      size  = bytes.size
       index = 0
       start = 0
       while index < size
@@ -73,19 +73,19 @@ class Asekii::Terminal
           case byte
           when 0x5f
             @held.byte(byte)
-            @osc = false
+            @osc   = false
             @phase = Phase::Body
             index += 1
           when 0x5d
             @held.byte(byte)
-            @osc = true
-            @code = 0
+            @osc   = true
+            @code  = 0
             @phase = Phase::Code
             index += 1
           else
             io.write(@held.written)
             @phase = Phase::Ground
-            start = index
+            start  = index
           end
         in .code?
           byte = bytes[index]
@@ -98,7 +98,7 @@ class Asekii::Terminal
           else
             io.write(@held.written)
             @phase = Phase::Ground
-            start = index
+            start  = index
           end
         in .body?
           stop = index
@@ -134,7 +134,7 @@ class Asekii::Terminal
     end
 
     private def wrap(io : IO) : Nil
-      @phase = Phase::Ground
+      @phase   = Phase::Ground
       sequence = @held.written
       @mode.screen? ? screen(sequence, io) : tmux(sequence, io)
       @held.reset

@@ -47,7 +47,7 @@ end
 private def drain(screen, needle : String) : String
   screen.read_timeout = 20.milliseconds
   chunk = Bytes.new(65536)
-  seen = ""
+  seen  = ""
   150.times do
     return seen if seen.includes?(needle)
     begin
@@ -111,7 +111,7 @@ private def raw?(mode : TTY::Termios) : Bool
 end
 
 private class Console
-  getter pty : TTY::PTY
+  getter pty  : TTY::PTY
   getter term : Asekii::Terminal
 
   def initialize(config : Asekii::Terminal::Config = plain, size : TTY::Winsize? = nil, & : TTY::PTY ->)
@@ -211,7 +211,7 @@ private class Rig
   getter seen = ""
   getter last = ""
   @buffer = ""
-  @feed : IO::FileDescriptor
+  @feed   : IO::FileDescriptor
   @screen : IO::FileDescriptor
   @reader : IO::FileDescriptor
   @writer : IO::FileDescriptor
@@ -220,7 +220,7 @@ private class Rig
     reader, @feed = IO.pipe
     @screen, writer = IO.pipe
     @screen.read_timeout = 20.milliseconds
-    @term = Asekii::Terminal.new(config, reader, writer)
+    @term   = Asekii::Terminal.new(config, reader, writer)
     @reader = reader
     @writer = writer
     expect(/\e\[16t/)
@@ -235,8 +235,8 @@ private class Rig
     chunk = Bytes.new(65536)
     attempts.times do
       if match = pattern.match(@buffer)
-        @seen = match.pre_match + match[0]
-        @last = match[0]
+        @seen   = match.pre_match + match[0]
+        @last   = match[0]
         @buffer = match.post_match
         return match
       end
@@ -361,9 +361,9 @@ private def capture(config : Asekii::Terminal::Config = plain, context : Fiber::
   reader, feed = IO.pipe
   screen, writer = IO.pipe
   output = Channel(String).new(1)
-  seen = String::Builder.new
+  seen   = String::Builder.new
   spawn do
-    tail = ""
+    tail  = ""
     chunk = Bytes.new(65536)
     loop do
       count = screen.read(chunk)
@@ -423,7 +423,7 @@ private def settle(term : Asekii::Terminal) : Nil
 end
 
 private def cycles(ending : String) : Regex
-  setup = Regex.escape(SETUP)
+  setup    = Regex.escape(SETUP)
   teardown = Regex.escape(TEARDOWN)
   Regex.new("\\A#{setup}(?:#{teardown}#{setup})*#{teardown}#{ending}\\z")
 end
@@ -577,7 +577,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed tap('a') + tap('a') + tap('b')
         events = rig.upto { |event| marker?(event, 'b') }
-        taps = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.tap?)
+        taps   = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.tap?)
         taps.map(&.count).should eq([1, 2, 1])
         taps.map(&.key.code).should eq([97, 97, 98])
         metrics = events.compact_map(&.as?(Asekii::Event::TypingMetric))
@@ -590,7 +590,7 @@ describe Asekii::Terminal do
     it "counts rollover overlap from the pressed set" do
       rig do |rig|
         rig.feed press('a') + press('b') + release('a') + release('b')
-        events = rig.upto { |event| marker?(event, 'b') }
+        events  = rig.upto { |event| marker?(event, 'b') }
         metrics = events.compact_map(&.as?(Asekii::Event::TypingMetric))
         metrics.map(&.code).should eq([97, 98])
         metrics.map(&.overlap).should eq([0, 1])
@@ -693,9 +693,9 @@ describe Asekii::Terminal do
 
     it "matches a shortcut against a key the way bindings do" do
       press = Asekii::Event::Key::Action::Press
-      save = Asekii::Event::Shortcut.parse("ctrl+s")
-      plus = Asekii::Event::Shortcut.parse("ctrl++")
-      quit = Asekii::Event::Shortcut.parse("ctrl+q", physical: true)
+      save  = Asekii::Event::Shortcut.parse("ctrl+s")
+      plus  = Asekii::Event::Shortcut.parse("ctrl++")
+      quit  = Asekii::Event::Shortcut.parse("ctrl+q", physical: true)
       save.matches?(Asekii::Event::Key.new('s'.ord, press, Asekii::Event::Mods::Ctrl | Asekii::Event::Mods::CapsLock, nil, nil, nil)).should be_true
       save.matches?(Asekii::Event::Key.new('s'.ord, press, Asekii::Event::Mods::Alt, nil, nil, nil)).should be_false
       plus.matches?(Asekii::Event::Key.new('='.ord, press, Asekii::Event::Mods::Ctrl | Asekii::Event::Mods::Shift, '+'.ord, nil, nil)).should be_true
@@ -718,7 +718,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "\e[57441;2u\e[57441;1:3u\e[57442;5u#{press('a')}\e[57442;1:3u#{release('a')}"
         events = rig.upto { |event| marker?(event, 'a') }
-        taps = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.modifier_tap?)
+        taps   = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.modifier_tap?)
         taps.map(&.key.code).should eq([57441])
       end
     end
@@ -743,16 +743,16 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "\e[<1;1;1M\e[<2;1;1m\e[<34;2;2M\e[<35;3;3M\e[<65;3;3M\e[<67;3;3M\e[<129;3;3M\e[<131;3;3m\e[<8;3;3M\e[<256;0;0M"
         expected = [
-          {Asekii::Event::Mouse::Action::Press, Asekii::Event::Mouse::Button::Middle},
+          {Asekii::Event::Mouse::Action::Press,   Asekii::Event::Mouse::Button::Middle},
           {Asekii::Event::Mouse::Action::Release, Asekii::Event::Mouse::Button::Right},
-          {Asekii::Event::Mouse::Action::Drag, Asekii::Event::Mouse::Button::Right},
-          {Asekii::Event::Mouse::Action::Hover, Asekii::Event::Mouse::Button::None},
-          {Asekii::Event::Mouse::Action::Scroll, Asekii::Event::Mouse::Button::WheelDown},
-          {Asekii::Event::Mouse::Action::Scroll, Asekii::Event::Mouse::Button::WheelRight},
-          {Asekii::Event::Mouse::Action::Press, Asekii::Event::Mouse::Button::Aux9},
+          {Asekii::Event::Mouse::Action::Drag,    Asekii::Event::Mouse::Button::Right},
+          {Asekii::Event::Mouse::Action::Hover,   Asekii::Event::Mouse::Button::None},
+          {Asekii::Event::Mouse::Action::Scroll,  Asekii::Event::Mouse::Button::WheelDown},
+          {Asekii::Event::Mouse::Action::Scroll,  Asekii::Event::Mouse::Button::WheelRight},
+          {Asekii::Event::Mouse::Action::Press,   Asekii::Event::Mouse::Button::Aux9},
           {Asekii::Event::Mouse::Action::Release, Asekii::Event::Mouse::Button::Aux11},
-          {Asekii::Event::Mouse::Action::Press, Asekii::Event::Mouse::Button::Left},
-          {Asekii::Event::Mouse::Action::Leave, Asekii::Event::Mouse::Button::None},
+          {Asekii::Event::Mouse::Action::Press,   Asekii::Event::Mouse::Button::Left},
+          {Asekii::Event::Mouse::Action::Leave,   Asekii::Event::Mouse::Button::None},
         ]
         expected.each do |action, button|
           mouse = rig.event(Asekii::Event::Mouse)
@@ -811,7 +811,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "\e[<0;10;10M\e[<32;30;10M\e[<32;50;14M\e[<0;50;14m#{tap('q')}"
         events = rig.upto { |event| marker?(event, 'q') }
-        drags = events.compact_map(&.as?(Asekii::Event::MouseGesture)).select { |gesture| gesture.kind.drag_start? || gesture.kind.drag_move? || gesture.kind.drag_end? }
+        drags  = events.compact_map(&.as?(Asekii::Event::MouseGesture)).select { |gesture| gesture.kind.drag_start? || gesture.kind.drag_move? || gesture.kind.drag_end? }
         drags.map(&.kind).should eq([Asekii::Event::MouseGesture::Kind::DragStart, Asekii::Event::MouseGesture::Kind::DragMove, Asekii::Event::MouseGesture::Kind::DragEnd])
         drags.map(&.dx).should eq([20, 40, 40])
         drags.last.dy.should eq(4)
@@ -868,7 +868,7 @@ describe Asekii::Terminal do
         rig.event(Asekii::Event::MouseGesture, &.kind.scroll?).count.should eq(1)
         rig.feed "\e[<64;5;5M\e[<64;5;5M"
         started = Time.instant
-        batch = rig.event(Asekii::Event::MouseGesture, &.kind.scroll?)
+        batch   = rig.event(Asekii::Event::MouseGesture, &.kind.scroll?)
         batch.count.should eq(2)
         batch.velocity.should be > 0.0
         started.elapsed.should be < 500.milliseconds
@@ -1176,7 +1176,7 @@ describe Asekii::Terminal do
 
     it "reads from the primary selection" do
       rig do |rig|
-        reply = osc("5522;type=read:status=ENOSYS:id=term")
+        reply     = osc("5522;type=read:status=ENOSYS:id=term")
         clipboard = rig.ask(/\e\]5522;type=read:id=term:loc=primary;/, reply) { rig.term.clipboard_read("text/plain", primary: true) }.not_nil!
         clipboard.status.should eq(Asekii::Terminal::Status::ENOSYS)
         clipboard.done?.should be_false
@@ -1205,7 +1205,7 @@ describe Asekii::Terminal do
         reply = osc("5522;type=read:status=OK:id=term") +
                 osc("5522;type=read:status=DATA:id=term:mime=#{b64("text/html")};#{b64("<b>Bold text</b>")}") +
                 osc("5522;type=read:status=DONE:id=term")
-        request = /\e\]5522;type=read:id=term:loc=primary:pw=c2VjcmV0:name=UGFzdGUgZXZlbnQ=;#{Regex.escape(b64("text/html"))}\e\\/
+        request   = /\e\]5522;type=read:id=term:loc=primary:pw=c2VjcmV0:name=UGFzdGUgZXZlbnQ=;#{Regex.escape(b64("text/html"))}\e\\/
         clipboard = rig.ask(request, reply) { rig.term.clipboard_read(paste, "text/html") }.not_nil!
         String.new(clipboard.data["text/html"]).should eq("<b>Bold text</b>")
       end
@@ -1263,7 +1263,7 @@ describe Asekii::Terminal do
     it "compresses direct data and requests an id through an image number" do
       rig do |rig|
         data = Bytes.new(500, 7_u8)
-        ack = rig.ask(/\e_Ga=t,I=13[^\e]*\e\\/, apc("i=99,I=13;OK")) { rig.term.image(Asekii::Terminal::Pixels.png(data, compress: true), number: 13) }.not_nil!
+        ack  = rig.ask(/\e_Ga=t,I=13[^\e]*\e\\/, apc("i=99,I=13;OK")) { rig.term.image(Asekii::Terminal::Pixels.png(data, compress: true), number: 13) }.not_nil!
         {ack.image, ack.number}.should eq({99, 13})
         match = rig.last.match!(/\e_G([^;]*);([^\e]*)\e\\/)
         match[1].should eq("a=t,I=13,f=100,t=d,S=500,o=z")
@@ -1522,7 +1522,7 @@ describe Asekii::Terminal do
     it "sends every option, then body, buttons and icon data with the done flag last" do
       rig do |rig|
         icon = Bytes.new(3000) { |index| (index % 200).to_u8 }
-        id = rig.term.notify("Title", "Body", id: "n1", report: true, closes: true, app: "demo", types: ["im", "email"], icons: ["info", "demo"], icon: icon, icon_key: "k1", buttons: ["Yes", "No"], sound: "silent", urgency: Asekii::Terminal::Urgency::Critical, expires: 5.seconds, occasion: Asekii::Terminal::Occasion::Invisible)
+        id   = rig.term.notify("Title", "Body", id: "n1", report: true, closes: true, app: "demo", types: ["im", "email"], icons: ["info", "demo"], icon: icon, icon_key: "k1", buttons: ["Yes", "No"], sound: "silent", urgency: Asekii::Terminal::Urgency::Critical, expires: 5.seconds, occasion: Asekii::Terminal::Occasion::Invisible)
         id.should eq("n1")
         rig.expect(/\e\]99;i=n1:p=icon:e=1:g=k1;[^\e]*\e\\/)
         codes = rig.seen.scan(/\e\]99;([^;]*);([^\e]*)\e\\/).map { |match| {match[1], match[2]} }
@@ -1692,8 +1692,8 @@ describe Asekii::Terminal do
     it "reads dropped data sent in unpadded chunks and sees the remote flag" do
       rig do |rig|
         encoded = b64("file:///a\r\n#comment\r\nfile:///d/\r\n").rstrip('=')
-        reply = osc("72;t=r:x=1:X=1:m=1;#{encoded[0, 10]}") + osc("72;t=r:x=1:m=1;#{encoded[10..]}") + osc("72;t=r:x=1;")
-        data = rig.ask(/\e\]72;t=r:x=1\e\\/, reply) { rig.term.drop_data(1) }.not_nil!
+        reply   = osc("72;t=r:x=1:X=1:m=1;#{encoded[0, 10]}") + osc("72;t=r:x=1:m=1;#{encoded[10..]}") + osc("72;t=r:x=1;")
+        data    = rig.ask(/\e\]72;t=r:x=1\e\\/, reply) { rig.term.drop_data(1) }.not_nil!
         data.ok?.should be_true
         data.remote?.should be_true
         data.symlink?.should be_false
@@ -1857,11 +1857,11 @@ describe Asekii::Terminal do
           rig.expect("\e]72;t=k:x=1:Y=3:y=1:m=0\e\\")
           heads = rig.seen.scan(/\e\]72;([^;\e]*);([^\e]*)\e\\/).map { |match| {match[1], Base64.decode_string(match[2])} }
           heads.should eq([
-            {"t=k:x=1:X=2:m=1", "a.txt\0link\0sub"},
-            {"t=k:x=1:Y=2:y=1:m=1", "hello"},
+            {"t=k:x=1:X=2:m=1",         "a.txt\0link\0sub"},
+            {"t=k:x=1:Y=2:y=1:m=1",     "hello"},
             {"t=k:x=1:X=1:Y=2:y=2:m=1", "a.txt"},
             {"t=k:x=1:X=3:Y=2:y=3:m=1", "b.txt"},
-            {"t=k:x=1:Y=3:y=1:m=1", "deep"},
+            {"t=k:x=1:Y=3:y=1:m=1",     "deep"},
           ])
           rig.seen.scan(/:m=0\e\\/).size.should eq(5)
         end
@@ -1937,7 +1937,7 @@ describe Asekii::Terminal do
     it "ignores invalid base64 in drag and drop data and keeps running" do
       rig do |rig|
         config_limit = 60.milliseconds
-        result = Channel(Asekii::Event::DropData?).new(1)
+        result       = Channel(Asekii::Event::DropData?).new(1)
         spawn { result.send(rig.term.drop_data(1, limit: config_limit)) }
         rig.expect("\e]72;t=r:x=1\e\\")
         rig.feed osc("72;t=r:x=1;@@@@") + press('a')
@@ -2311,7 +2311,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "aA1" + tap('q')
         events = rig.upto { |event| marker?(event, 'q') }
-        keys = events.compact_map(&.as?(Asekii::Event::Key)).first(6)
+        keys   = events.compact_map(&.as?(Asekii::Event::Key)).first(6)
         keys.map(&.code).should eq([97, 97, 97, 97, 49, 49])
         keys.map(&.action.press?).should eq([true, false, true, false, true, false])
         keys[0].text.should eq("a")
@@ -2342,7 +2342,7 @@ describe Asekii::Terminal do
       rig(config) do |rig|
         rig.feed "\r\t\u007f\u0001\u0000\u001d\u0013" + tap('q')
         events = rig.upto { |event| marker?(event, 'q') }
-        keys = events.compact_map(&.as?(Asekii::Event::Key)).select(&.press?).first(7)
+        keys   = events.compact_map(&.as?(Asekii::Event::Key)).select(&.press?).first(7)
         keys.first(3).map(&.named).should eq([Asekii::Event::Named::Enter, Asekii::Event::Named::Tab, Asekii::Event::Named::Backspace])
         keys[3..].map(&.code).should eq([97, 32, 93, 115])
         keys[3..].all?(&.ctrl?).should be_true
@@ -2356,7 +2356,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "\ea\eOP\eOA\eOR" + tap('q')
         events = rig.upto { |event| marker?(event, 'q') }
-        keys = events.compact_map(&.as?(Asekii::Event::Key)).select(&.press?).first(4)
+        keys   = events.compact_map(&.as?(Asekii::Event::Key)).select(&.press?).first(4)
         {keys[0].code, keys[0].mods, keys[0].text}.should eq({97, Asekii::Event::Mods::Alt, nil})
         keys[1..].map(&.named).should eq([Asekii::Event::Named::F1, Asekii::Event::Named::Up, Asekii::Event::Named::F3])
       end
@@ -2441,12 +2441,12 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed "\e[97;1u\e[97;1:3u\e[98;65u\e[98;65:3u\e[99;193u\e[99;129:3u#{tap('q')}"
         events = rig.upto { |event| marker?(event, 'q') }
-        locks = events.compact_map(&.as?(Asekii::Event::Lock)).map { |lock| {lock.lock, lock.active} }
+        locks  = events.compact_map(&.as?(Asekii::Event::Lock)).map { |lock| {lock.lock, lock.active} }
         locks.should eq([
           {Asekii::Event::Mods::CapsLock, true},
-          {Asekii::Event::Mods::NumLock, true},
+          {Asekii::Event::Mods::NumLock,  true},
           {Asekii::Event::Mods::CapsLock, false},
-          {Asekii::Event::Mods::NumLock, false},
+          {Asekii::Event::Mods::NumLock,  false},
         ])
       end
     end
@@ -2458,8 +2458,8 @@ describe Asekii::Terminal do
         events.compact_map(&.as?(Asekii::Event::TextInput)).map(&.text).should eq(["a"])
         commands = events.compact_map(&.as?(Asekii::Event::KeyCommand)).map { |command| {command.key.code, command.key.action} }
         commands.first(3).should eq([
-          {97, Asekii::Event::Key::Action::Release},
-          {97, Asekii::Event::Key::Action::Press},
+          {97,    Asekii::Event::Key::Action::Release},
+          {97,    Asekii::Event::Key::Action::Press},
           {57350, Asekii::Event::Key::Action::Press},
         ])
       end
@@ -2469,7 +2469,7 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.feed tap('a') + tap('a') + tap('b')
         events = rig.upto { |event| marker?(event, 'b') }
-        multi = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.multi_tap?)
+        multi  = events.compact_map(&.as?(Asekii::Event::KeyGesture)).select(&.kind.multi_tap?)
         multi.map { |gesture| {gesture.key.code, gesture.count} }.should eq([{97, 1}, {97, 2}, {98, 1}])
       end
     end
@@ -2632,10 +2632,10 @@ describe Asekii::Terminal do
 
     it "streams dropped data into an IO" do
       rig do |rig|
-        data = Bytes.new(7000) { |index| (index % 233).to_u8 }
+        data    = Bytes.new(7000) { |index| (index % 233).to_u8 }
         encoded = b64(data).rstrip('=')
-        reply = osc("72;t=r:x=1:m=1;#{encoded[0, 4095]}") + osc("72;t=r:x=1:m=1;#{encoded[4095, 4095]}") + osc("72;t=r:x=1:m=1;#{encoded[8190..]}") + osc("72;t=r:x=1;")
-        sink = IO::Memory.new
+        reply   = osc("72;t=r:x=1:m=1;#{encoded[0, 4095]}") + osc("72;t=r:x=1:m=1;#{encoded[4095, 4095]}") + osc("72;t=r:x=1:m=1;#{encoded[8190..]}") + osc("72;t=r:x=1;")
+        sink    = IO::Memory.new
         dropped = rig.ask(/\e\]72;t=r:x=1\e\\/, reply) { rig.term.drop_data(1, into: sink) }.not_nil!
         dropped.ok?.should be_true
         dropped.data.should be_empty
@@ -2730,10 +2730,10 @@ describe Asekii::Terminal do
           rig.expect("\e]72;t=E;ENOENT\e\\")
           heads = rig.seen.scan(/\e\]72;([^;\e]*);([^\e]*)\e\\/).map { |match| {match[1], match[1].ends_with?("m=1") ? Base64.decode_string(match[2]) : match[2]} }
           heads.should eq([
-            {"t=k:x=2:X=2:m=1", "b.txt"},
+            {"t=k:x=2:X=2:m=1",     "b.txt"},
             {"t=k:x=2:Y=2:y=1:m=1", "deep"},
-            {"t=k:x=1:m=1", "hello"},
-            {"t=E", "ENOENT"},
+            {"t=k:x=1:m=1",         "hello"},
+            {"t=E",                 "ENOENT"},
           ])
           Array.new(3) { rig.event(Asekii::Event::Drag).index }.should eq([2, 1, 9])
         end
@@ -2933,7 +2933,7 @@ describe Asekii::Terminal do
         end
         settle(term)
       end
-      body = output.gsub(SIZE_ASK, "").lchop(SETUP).rchop(TEARDOWN)
+      body  = output.gsub(SIZE_ASK, "").lchop(SETUP).rchop(TEARDOWN)
       codes = body.scan(/\e\]21;(\d)=rgb:00\/00\/00\e\\/)
       codes.size.should eq(1600)
       codes.sum(&.[0].bytesize).should eq(body.bytesize)

@@ -121,9 +121,9 @@ describe Asekii::Render::Plane do
   end
 
   it "follows its parent and tells bound planes about a resize" do
-    stage = Engine.new
+    stage  = Engine.new
     parent = stage.plane(8, 3, 2, 1)
-    child = parent.plane(2, 1, 1, 1)
+    child  = parent.plane(2, 1, 1, 1)
     child.abs_x.should eq(3)
     child.abs_y.should eq(2)
     parent.move(5, 0)

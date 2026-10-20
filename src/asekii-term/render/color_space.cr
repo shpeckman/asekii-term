@@ -1,4 +1,4 @@
-# src/asekii/render/color_space.cr
+# src/asekii-term/render/color_space.cr
 module Asekii::Render
   enum BlendSpace
     Linear
@@ -92,9 +92,9 @@ module Asekii::Render
 
     def from_lab(value : Triple) : UInt32
       fy = (value[0] + 16.0_f32) / 116.0_f32
-      x = lab_inverse(fy + value[1] / 500.0_f32) * WHITE_X
-      y = lab_inverse(fy)
-      z = lab_inverse(fy - value[2] / 200.0_f32) * WHITE_Z
+      x  = lab_inverse(fy + value[1] / 500.0_f32) * WHITE_X
+      y  = lab_inverse(fy)
+      z  = lab_inverse(fy - value[2] / 200.0_f32) * WHITE_Z
       from_linear({
         3.2404542_f32 * x - 1.5371385_f32 * y - 0.4985314_f32 * z,
         -0.9692660_f32 * x + 1.8760108_f32 * y + 0.0415560_f32 * z,
@@ -118,10 +118,10 @@ module Asekii::Render
       linear = oklab_linear(value)
       return from_linear(linear) if in_gamut?(linear)
       lightness = value[0].clamp(0.0_f32, 1.0_f32)
-      a = value[1]
-      b = value[2]
-      chroma = Math.sqrt(a * a + b * b)
-      linear = oklab_linear({lightness, a, b})
+      a         = value[1]
+      b         = value[2]
+      chroma    = Math.sqrt(a * a + b * b)
+      linear    = oklab_linear({lightness, a, b})
       return from_linear(linear) if chroma <= 0.0_f32 || in_gamut?(linear)
       hue = Math.atan2(b, a)
       cap = max_chroma(lightness, hue)
@@ -157,10 +157,10 @@ module Asekii::Render
 
     def wcag_to_apca(ratio : Float32) : Float32
       anchors = [
-        {1.0_f32, 0.0_f32},
-        {3.0_f32, 60.0_f32},
-        {4.5_f32, 75.0_f32},
-        {7.0_f32, 90.0_f32},
+        {1.0_f32,  0.0_f32},
+        {3.0_f32,  60.0_f32},
+        {4.5_f32,  75.0_f32},
+        {7.0_f32,  90.0_f32},
         {21.0_f32, 106.0_f32},
       ]
       return anchors.last[1] if ratio >= anchors.last[0]
@@ -237,12 +237,12 @@ module Asekii::Render
     @[AlwaysInline]
     private def oklab_linear(value : Triple) : Triple
       lightness = toe_inverse(value[0])
-      l = lightness + 0.3963377774_f32 * value[1] + 0.2158037573_f32 * value[2]
-      m = lightness - 0.1055613458_f32 * value[1] - 0.0638541728_f32 * value[2]
-      s = lightness - 0.0894841775_f32 * value[1] - 1.2914855480_f32 * value[2]
-      l = l * l * l
-      m = m * m * m
-      s = s * s * s
+      l         = lightness + 0.3963377774_f32 * value[1] + 0.2158037573_f32 * value[2]
+      m         = lightness - 0.1055613458_f32 * value[1] - 0.0638541728_f32 * value[2]
+      s         = lightness - 0.0894841775_f32 * value[1] - 1.2914855480_f32 * value[2]
+      l         = l * l * l
+      m         = m * m * m
+      s         = s * s * s
       {
         4.0767416621_f32 * l - 3.3077115913_f32 * m + 0.2309699292_f32 * s,
         -1.2684380046_f32 * l + 2.6097574011_f32 * m - 0.3413193965_f32 * s,
@@ -258,10 +258,10 @@ module Asekii::Render
     end
 
     private def apca_lc(text : Float32, bg : Float32) : Float32
-      black = 0.022_f32
-      clamp_p = 1.414_f32
+      black     = 0.022_f32
+      clamp_p   = 1.414_f32
       soft_text = text > black ? text : text + (black - text) ** clamp_p
-      soft_bg = bg > black ? bg : bg + (black - bg) ** clamp_p
+      soft_bg   = bg > black ? bg : bg + (black - bg) ** clamp_p
       return 0.0_f32 if (soft_bg - soft_text).abs < 0.0005_f32
       value =
         if soft_bg > soft_text
@@ -277,8 +277,8 @@ module Asekii::Render
       hi = MAX_CHROMA
       24.times do
         mid = (lo + hi) / 2.0_f32
-        a = mid * Math.cos(hue)
-        b = mid * Math.sin(hue)
+        a   = mid * Math.cos(hue)
+        b   = mid * Math.sin(hue)
         if in_gamut?(oklab_linear({lightness, a, b}))
           lo = mid
         else

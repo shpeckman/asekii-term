@@ -23,7 +23,7 @@ describe Asekii::Render::Bitmap do
   end
 
   it "joins changed tiles that line up into one region" do
-    fresh = canvas([{4, 4}, {35, 4}, {4, 40}, {35, 40}, {100, 80}])
+    fresh   = canvas([{4, 4}, {35, 4}, {4, 40}, {35, 40}, {100, 80}])
     regions = fresh.regions(canvas([] of {Int32, Int32}))
     regions.should eq([rect(4, 4, 32, 37), rect(100, 80, 1, 1)])
   end

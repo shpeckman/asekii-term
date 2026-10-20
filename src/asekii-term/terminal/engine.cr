@@ -1,10 +1,10 @@
-# src/asekii/terminal/engine.cr
+# src/asekii-term/terminal/engine.cr
 class Asekii::Terminal
   IDLE = 1.hour
 
   private class Held
-    getter key : Event::Key
-    getter at : Time::Span
+    getter key     : Event::Key
+    getter at      : Time::Span
     getter latency : Time::Span
     getter overlap : Int32
     property repeats = 0
@@ -16,8 +16,8 @@ class Asekii::Terminal
 
   private class Wheel
     property mouse : Event::Mouse?
-    property count = 0
-    property closes = Time::Span.zero
+    property count   = 0
+    property closes  = Time::Span.zero
     property emitted = Time::Span.zero
   end
 
@@ -27,32 +27,32 @@ class Asekii::Terminal
   end
 
   @backlog = Deque(Event::Input).new
-  @locks : Event::Mods?
+  @locks  : Event::Mods?
   @anchor : Event::Mouse?
-  @held = {} of Int32 => Held
-  @latched = Set(String).new
-  @lone = Set(Int32).new
-  @timers = [] of Event::Timer
-  @physical = {} of {Int32, Event::Mods} => String
-  @symbolic = {} of {Int32, Event::Mods} => String
-  @root = Node.new
-  @node = Node.new
+  @held       = {} of Int32 => Held
+  @latched    = Set(String).new
+  @lone       = Set(Int32).new
+  @timers     = [] of Event::Timer
+  @physical   = {} of {Int32, Event::Mods} => String
+  @symbolic   = {} of {Int32, Event::Mods} => String
+  @root       = Node.new
+  @node       = Node.new
   @last_press = Time::Span.zero
-  @tap_code = 0
-  @tap_at = Time::Span.zero
-  @tap_count = 0
-  @buttons = Set(Event::Mouse::Button).new
+  @tap_code   = 0
+  @tap_at     = Time::Span.zero
+  @tap_count  = 0
+  @buttons    = Set(Event::Mouse::Button).new
   @press : Event::Mouse?
   @press_at = Time::Span.zero
   @last : Event::Mouse?
   @last_at = Time::Span.zero
   @click : Event::Mouse?
-  @click_at = Time::Span.zero
+  @click_at    = Time::Span.zero
   @click_count = 0
-  @wheels = {Wheel.new, Wheel.new}
-  @dragging = false
-  @inside = false
-  @dwelling = false
+  @wheels      = {Wheel.new, Wheel.new}
+  @dragging    = false
+  @inside      = false
+  @dwelling    = false
 
   private def setup_engine : Nil
     @node = @root
@@ -162,7 +162,7 @@ class Asekii::Terminal
 
   private def toggled(locks : Event::Mods) : Nil
     previous = @locks
-    @locks = locks
+    @locks   = locks
     return unless previous
     {Event::Mods::CapsLock, Event::Mods::NumLock}.each do |lock|
       emit Event::Lock.new(lock, locks.includes?(lock)) if (previous ^ locks).includes?(lock)
@@ -203,10 +203,10 @@ class Asekii::Terminal
       if held.holding?
         emit Event::KeyGesture.new(:hold_end, key)
       else
-        again = code == @tap_code && now - @tap_at < @config.multi_tap_window
+        again      = code == @tap_code && now - @tap_at < @config.multi_tap_window
         @tap_count = again ? @tap_count + 1 : 1
-        @tap_code = code
-        @tap_at = now
+        @tap_code  = code
+        @tap_at    = now
         emit Event::KeyGesture.new(:tap, key, @tap_count)
         emit Event::KeyGesture.new(:multi_tap, key, @tap_count)
       end
@@ -257,14 +257,14 @@ class Asekii::Terminal
       moved(mouse, now)
     when .drag?
       moved(mouse, now)
-      origin = @press || mouse
-      kind = @dragging ? Event::MouseGesture::Kind::DragMove : Event::MouseGesture::Kind::DragStart
+      origin    = @press || mouse
+      kind      = @dragging ? Event::MouseGesture::Kind::DragMove : Event::MouseGesture::Kind::DragStart
       @dragging = true
       emit Event::MouseGesture.new(kind, mouse, 1, mouse.x - origin.x, mouse.y - origin.y)
     when .press?
       @buttons << mouse.button
       emit Event::MouseGesture.new(:chord, mouse, @buttons.size) if @buttons.size > 1
-      @press = mouse
+      @press    = mouse
       @press_at = now
       @dragging = false
       arm(:long_press, now, @config.long_press_after)
@@ -273,7 +273,7 @@ class Asekii::Terminal
     when .scroll?
       scrolled(mouse, now)
     end
-    @last = mouse
+    @last    = mouse
     @last_at = now
   end
 
@@ -293,9 +293,9 @@ class Asekii::Terminal
 
   private def lifted(mouse : Event::Mouse, now : Time::Span) : Nil
     @buttons.delete(mouse.button)
-    press = @press
-    dragging = @dragging
-    @press = nil
+    press     = @press
+    dragging  = @dragging
+    @press    = nil
     @dragging = false
     return unless press
     dx = mouse.x - press.x
@@ -305,18 +305,18 @@ class Asekii::Terminal
       emit Event::MouseGesture.new(:drag_end, mouse, 1, dx, dy, velocity)
       emit Event::MouseGesture.new(:swipe, mouse, 1, dx, dy, velocity) if velocity >= @config.swipe_velocity
     elsif press.button == mouse.button && near?(dx, dy) && now - @press_at <= @config.click_window
-      click = @click
-      again = click && click.button == mouse.button && now - @click_at <= @config.multi_click_window && near?(mouse.x - click.x, mouse.y - click.y)
+      click        = @click
+      again        = click && click.button == mouse.button && now - @click_at <= @config.multi_click_window && near?(mouse.x - click.x, mouse.y - click.y)
       @click_count = again ? @click_count + 1 : 1
-      @click = mouse
-      @click_at = now
+      @click       = mouse
+      @click_at    = now
       emit Event::MouseGesture.new(:click, mouse, @click_count)
     end
   end
 
   private def scrolled(mouse : Event::Mouse, now : Time::Span) : Nil
-    axis = mouse.button.wheel_left? || mouse.button.wheel_right? ? 1 : 0
-    wheel = @wheels[axis]
+    axis   = mouse.button.wheel_left? || mouse.button.wheel_right? ? 1 : 0
+    wheel  = @wheels[axis]
     turned = wheel.mouse.try(&.button) != mouse.button
     flush_scroll(wheel, now) if turned
     wheel.mouse = mouse

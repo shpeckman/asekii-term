@@ -1,4 +1,4 @@
-# src/asekii/render/plane.cr
+# src/asekii-term/render/plane.cr
 module Asekii::Render
   record Placeholder, row : Int32, col : Int32, high : Int32 do
     def self.of(glyph : UInt32) : Placeholder?
@@ -38,46 +38,46 @@ module Asekii::Render
 
     MAX_PLACEMENT = 0xFFFFFF_u32
 
-    getter cols : Int32
-    getter rows : Int32
-    getter x : Int32
-    getter y : Int32
-    getter parent : Plane?
-    getter children : Array(Plane)
-    getter sprites : Array(Sprite)
-    getter serial : UInt32
-    getter opacity : UInt8
+    getter cols      : Int32
+    getter rows      : Int32
+    getter x         : Int32
+    getter y         : Int32
+    getter parent    : Plane?
+    getter children  : Array(Plane)
+    getter sprites   : Array(Sprite)
+    getter serial    : UInt32
+    getter opacity   : UInt8
     getter base_cell : Cell
-    getter fg : Paint
-    getter bg : Paint
-    getter? visible : Bool
+    getter fg        : Paint
+    getter bg        : Paint
+    getter? visible  : Bool
     getter? disposed : Bool
-    getter? clip : Bool
-    getter bounds : Tuple(Int32, Int32, Int32, Int32)?
+    getter? clip     : Bool
+    getter bounds    : Tuple(Int32, Int32, Int32, Int32)?
 
     @resized : (Plane -> Nil)?
 
     def initialize(@pile : Pile, @parent : Plane?, cols : Int32, rows : Int32,
                    @x : Int32 = 0, @y : Int32 = 0)
-      @cols = Math.max(cols, 0)
-      @rows = Math.max(rows, 0)
-      @cells = Slice(Cell).new(@cols * @rows, Cell::EMPTY)
-      @children = [] of Plane
-      @sprites = [] of Sprite
-      @serial = @pile.serial
-      @opacity = 255_u8
+      @cols      = Math.max(cols, 0)
+      @rows      = Math.max(rows, 0)
+      @cells     = Slice(Cell).new(@cols * @rows, Cell::EMPTY)
+      @children  = [] of Plane
+      @sprites   = [] of Sprite
+      @serial    = @pile.serial
+      @opacity   = 255_u8
       @base_cell = Cell::EMPTY
-      @fg = Paint.foreground
-      @bg = Paint::NONE
-      @visible = true
-      @disposed = false
-      @clip = false
-      @bounds = nil
-      @resized = nil
-      @left = 0
-      @top = 0
-      @right = 0
-      @bottom = 0
+      @fg        = Paint.foreground
+      @bg        = Paint::NONE
+      @visible   = true
+      @disposed  = false
+      @clip      = false
+      @bounds    = nil
+      @resized   = nil
+      @left      = 0
+      @top       = 0
+      @right     = 0
+      @bottom    = 0
       @parent.try(&.children.<<(self))
     end
 
@@ -122,7 +122,7 @@ module Asekii::Render
 
     def covers?(col : Int32, row : Int32) : Bool
       left = abs_x
-      top = abs_y
+      top  = abs_y
       col >= left && col < left + @cols && row >= top && row < top + @rows
     end
 
@@ -143,22 +143,22 @@ module Asekii::Render
     end
 
     def window : Tuple(Int32, Int32, Int32, Int32)
-      left = abs_x
-      top = abs_y
-      right = left + @cols
+      left   = abs_x
+      top    = abs_y
+      right  = left + @cols
       bottom = top + @rows
 
       if limit = @parent.try(&.reach)
-        left = Math.max(left, limit[0])
-        top = Math.max(top, limit[1])
-        right = Math.min(right, limit[2])
+        left   = Math.max(left, limit[0])
+        top    = Math.max(top, limit[1])
+        right  = Math.min(right, limit[2])
         bottom = Math.min(bottom, limit[3])
       end
 
       if limit = @bounds
-        left = Math.max(left, limit[0])
-        top = Math.max(top, limit[1])
-        right = Math.min(right, limit[2])
+        left   = Math.max(left, limit[0])
+        top    = Math.max(top, limit[1])
+        right  = Math.min(right, limit[2])
         bottom = Math.min(bottom, limit[3])
       end
 
@@ -193,9 +193,9 @@ module Asekii::Render
       target = link ? Links.intern(link) : 0_u32
       return 0 if y < 0 || y >= @rows
       front = ink(fg)
-      back = field(bg)
+      back  = field(bg)
       under = rule(line)
-      col = x
+      col   = x
       Graphemes.each(text) do |cluster, width|
         break if col >= @cols
         next if width == 0_u8 || control?(cluster)
@@ -215,16 +215,16 @@ module Asekii::Render
     def fill(x : Int32, y : Int32, cols : Int32, rows : Int32, glyph : Char? = nil,
              fg = nil, bg = nil, attrs : Attr = Attr::None, line = nil, link : String? = nil) : Nil
       target = link ? Links.intern(link) : 0_u32
-      left = Math.max(x, 0)
-      top = Math.max(y, 0)
-      right = Math.min(x + cols, @cols)
+      left   = Math.max(x, 0)
+      top    = Math.max(y, 0)
+      right  = Math.min(x + cols, @cols)
       bottom = Math.min(y + rows, @rows)
       return if left >= right || top >= bottom
       stamp = glyph ? glyph.ord.to_u32 : 0_u32
       front = ink(fg)
-      back = field(bg)
+      back  = field(bg)
       under = rule(line)
-      row = top
+      row   = top
       while row < bottom
         col = left
         while col < right
@@ -254,9 +254,9 @@ module Asekii::Render
     end
 
     def erase(x : Int32, y : Int32, cols : Int32, rows : Int32) : Nil
-      left = Math.max(x, 0)
-      top = Math.max(y, 0)
-      right = Math.min(x + cols, @cols)
+      left   = Math.max(x, 0)
+      top    = Math.max(y, 0)
+      right  = Math.min(x + cols, @cols)
       bottom = Math.min(y + rows, @rows)
       return if left >= right || top >= bottom
       (top...bottom).each do |row|
@@ -299,9 +299,9 @@ module Asekii::Render
       if placement && placement > MAX_PLACEMENT
         raise ArgumentError.new("placeholder placement ids are limited to 24 bits")
       end
-      tone = Paint.rgb(image_id & 0xFFFFFF_u32)
+      tone  = Paint.rgb(image_id & 0xFFFFFF_u32)
       under = placement ? Paint.rgb(placement) : Paint::NONE
-      high = (image_id >> 24).to_i32!
+      high  = (image_id >> 24).to_i32!
       rows.times do |row|
         columns.times do |col|
           next unless inside?(x + col, y + row)
@@ -366,13 +366,13 @@ module Asekii::Render
       return if cols == @cols && rows == @rows
       scar
       cells = Slice(Cell).new(cols * rows, Cell::EMPTY)
-      keep = Math.min(cols, @cols)
+      keep  = Math.min(cols, @cols)
       Math.min(rows, @rows).times do |row|
         @cells[row * @cols, keep].copy_to(cells[row * cols, keep])
       end
       @cells = cells
-      @cols = cols
-      @rows = rows
+      @cols  = cols
+      @rows  = rows
       heal
       scar
       @children.dup.each(&.follow)
@@ -442,8 +442,8 @@ module Asekii::Render
       @parent.try(&.children.delete(self))
       @pile.remove(self)
       @cells = Slice(Cell).empty
-      @cols = 0
-      @rows = 0
+      @cols  = 0
+      @rows  = 0
     end
 
     def dirty? : Bool
@@ -455,9 +455,9 @@ module Asekii::Render
     end
 
     def clean : Nil
-      @left = 0
-      @top = 0
-      @right = 0
+      @left   = 0
+      @top    = 0
+      @right  = 0
       @bottom = 0
     end
 
@@ -522,7 +522,7 @@ module Asekii::Render
       @rows.times do |row|
         @cols.times do |col|
           index = row * @cols + col
-          cell = @cells.unsafe_fetch(index)
+          cell  = @cells.unsafe_fetch(index)
           next unless cell.block?
           @cells.unsafe_put(index, cell.blanked) unless whole?(col - cell.dx, row, cell)
         end
@@ -540,20 +540,20 @@ module Asekii::Render
     end
 
     private def mark(left : Int32, top : Int32, right : Int32, bottom : Int32) : Nil
-      left = Math.max(left, 0)
-      top = Math.max(top, 0)
-      right = Math.min(right, @cols)
+      left   = Math.max(left, 0)
+      top    = Math.max(top, 0)
+      right  = Math.min(right, @cols)
       bottom = Math.min(bottom, @rows)
       return if left >= right || top >= bottom
       if dirty?
-        @left = Math.min(@left, left)
-        @top = Math.min(@top, top)
-        @right = Math.max(@right, right)
+        @left   = Math.min(@left, left)
+        @top    = Math.min(@top, top)
+        @right  = Math.max(@right, right)
         @bottom = Math.max(@bottom, bottom)
       else
-        @left = left
-        @top = top
-        @right = right
+        @left   = left
+        @top    = top
+        @right  = right
         @bottom = bottom
         @pile.touch
       end

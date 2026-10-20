@@ -1,4 +1,4 @@
-# src/asekii/terminal/clipboard.cr
+# src/asekii-term/terminal/clipboard.cr
 class Asekii::Terminal
   PASTE_NAME = "UGFzdGUgZXZlbnQ="
   CHUNK      = 4095
@@ -14,10 +14,10 @@ class Asekii::Terminal
   private class Transfer
     getter data = {} of String => Bytewire
     getter? solicited : Bool
-    getter? primary : Bool
-    getter password : String?
-    getter sink : IO?
-    @carry = ""
+    getter? primary   : Bool
+    getter password   : String?
+    getter sink       : IO?
+    @carry   = ""
     @scratch = Bytewire.new(4096)
 
     def initialize(@solicited, @primary, @password, @sink)
@@ -27,7 +27,7 @@ class Asekii::Terminal
       @carry += chunk
       return unless @carry.bytesize % 4 == 0
       encoded = @carry
-      @carry = ""
+      @carry  = ""
       if sink = @sink
         @scratch.reset
         @scratch.decode64(encoded)
@@ -38,7 +38,7 @@ class Asekii::Terminal
     end
   end
 
-  @transfer : Transfer?
+  @transfer    : Transfer?
   @credentials : String
 
   def copy(text : String, primary : Bool = false, limit : Time::Span = @config.clipboard_timeout) : Status?
@@ -121,7 +121,7 @@ class Asekii::Terminal
       return Clipboard.new(Status::ENOSYS, {} of String => Bytes)
     end
     sequence = Asekii::Terminal.build { |wire| wire.osc(52).char(primary ? 'p' : 'c').semi.char('?').st }
-    waiter = exclusive(Family::Clipboard) { enqueue(Query::ClipboardRead, sequence, "", true, sink) }
+    waiter   = exclusive(Family::Clipboard) { enqueue(Query::ClipboardRead, sequence, "", true, sink) }
     await(waiter, limit).as?(Clipboard)
   end
 
@@ -139,7 +139,7 @@ class Asekii::Terminal
 
   private def pasted(body : Bytes) : Nil
     waiting = peek(Query::ClipboardRead) || return
-    reader = Bytewire::Reader.new(body)
+    reader  = Bytewire::Reader.new(body)
     reader.take_until?(0x3b_u8) || return
     reader.byte?
     decoded = Bytewire.new(Math.max(Bytewire.bound_decode64(reader.rest), 16))
@@ -159,7 +159,7 @@ class Asekii::Terminal
     attempts = @config.busy_retries
     loop do
       waiter = exclusive(Family::Clipboard) { enqueue(Query::ClipboardRead, sequence, sink: sink) }
-      reply = await(waiter, limit).as?(Clipboard)
+      reply  = await(waiter, limit).as?(Clipboard)
       return reply unless reply && reply.status.ebusy? && attempts > 0
       attempts -= 1
       sleep @config.busy_delay
@@ -174,7 +174,7 @@ class Asekii::Terminal
     when "read"
       case status
       when "OK"
-        waiting = peek(Query::ClipboardRead)
+        waiting   = peek(Query::ClipboardRead)
         solicited = meta.has_key?("id") || (!meta.has_key?("pw") && !waiting.nil?)
         @transfer = Transfer.new(solicited, meta["loc"]? == "primary", meta["pw"]?, solicited ? waiting.try(&.sink) : nil)
       when "DATA"
@@ -191,9 +191,9 @@ class Asekii::Terminal
   end
 
   private def finish : Nil
-    transfer = @transfer || return
+    transfer  = @transfer || return
     @transfer = nil
-    data = transfer.data.transform_values { |wire| wire.written.dup }
+    data      = transfer.data.transform_values { |wire| wire.written.dup }
     if transfer.solicited?
       route(Query::ClipboardRead, Clipboard.new(Status::Done, data))
     else

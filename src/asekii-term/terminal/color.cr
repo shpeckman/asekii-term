@@ -1,4 +1,4 @@
-# src/asekii/terminal/color.cr
+# src/asekii-term/terminal/color.cr
 class Asekii::Terminal
   COLOR_NAMES = <<-NAMES
     aliceblue=f0f8ff antiquewhite=faebd7 antiquewhite1=ffefdb antiquewhite2=eedfcc antiquewhite3=cdc0b0
@@ -192,8 +192,8 @@ class Asekii::Terminal
         return new(channels.red, channels.green, channels.blue, opacity)
       end
 
-      reader = Bytewire::Reader.new(text)
-      body = reader.take_until?(0x40_u8) || reader.take_rest
+      reader  = Bytewire::Reader.new(text)
+      body    = reader.take_until?(0x40_u8) || reader.take_rest
       opacity = reader.match?(0x40_u8) ? String.new(reader.take_rest).to_f? : 1.0
       return unless opacity
       named = NAMES[String.new(body).downcase.delete(' ')]? || return
@@ -292,7 +292,7 @@ class Asekii::Terminal
   def confirm_color(key : String | Int32, value : Color | String, limit : Time::Span = @config.query_timeout) : Color?
     name = key.to_s
     unless @legacy_colors.get
-      seq = Asekii::Terminal.build { |wire| wire.osc(21).put(key).char('=').str(value.to_s).semi.put(key).str("=?").st }
+      seq   = Asekii::Terminal.build { |wire| wire.osc(21).put(key).char('=').str(value.to_s).semi.put(key).str("=?").st }
       reply = request(Query::Color, seq, limit, probe: true)
       return reply.as?(Palette).try &.[name]? unless reply.is_a?(Attributes)
       @legacy_colors.set(true)
@@ -306,8 +306,8 @@ class Asekii::Terminal
   end
 
   @legacy_colors = Atomic(Bool).new(false)
-  @scheme_asked = Atomic(Bool).new(false)
-  @gathered = {} of String => Color?
+  @scheme_asked  = Atomic(Bool).new(false)
+  @gathered      = {} of String => Color?
 
   private def inquire(keys : Array(String), limit : Time::Span) : Palette?
     unless @legacy_colors.get
@@ -328,7 +328,7 @@ class Asekii::Terminal
 
   private def xterm_colors(keys : Array(String), limit : Time::Span) : Palette?
     indices = [] of Int32
-    codes = [] of Int32
+    codes   = [] of Int32
     unknown = [] of String
     keys.each do |key|
       if index = key.to_i?
@@ -388,7 +388,7 @@ class Asekii::Terminal
 
   private def dynamic(code : Int32, body : Bytes) : Nil
     value = Bytewire::Reader.new(body)
-    text = String.new(value.take_until?(0x3b_u8) || value.take_rest)
+    text  = String.new(value.take_until?(0x3b_u8) || value.take_rest)
     color = Color.parse(text)
     if peek(Query::Palette)
       DYNAMIC_NAMES[code]?.try { |name| @gathered[name] = color }
@@ -399,21 +399,21 @@ class Asekii::Terminal
   end
 
   private def settle_palette : Nil
-    found = Palette.new(@gathered, [] of String)
+    found     = Palette.new(@gathered, [] of String)
     @gathered = {} of String => Color?
     route(Query::Palette, found, strict: true)
   end
 
   private def decode_colors(body : Bytes) : Palette
     palette = Palette.new({} of String => Color?, [] of String)
-    reader = Bytewire::Reader.new(body)
+    reader  = Bytewire::Reader.new(body)
     decoder = Bytewire.new(32)
     until reader.eof?
       pair = reader.take_until?(0x3b_u8) || reader.take_rest
       reader.byte?
       next if pair.empty?
-      sub = Bytewire::Reader.new(pair)
-      name = String.new(sub.take_until?(0x3d_u8) || sub.take_rest)
+      sub   = Bytewire::Reader.new(pair)
+      name  = String.new(sub.take_until?(0x3d_u8) || sub.take_rest)
       value = sub.match?(0x3d_u8) ? String.new(sub.take_rest) : ""
       if name == "unknown"
         decoder.reset
