@@ -47,8 +47,8 @@ class Asekii::Terminal
     end
   end
 
-  @identity    : Identity?
-  @identified  = Atomic(Bool).new(false)
+  @identity : Identity?
+  @identified = Atomic(Bool).new(false)
   @identifying = Sync::Mutex.new
 
   def attributes(limit : Time::Span = @config.query_timeout) : Attributes?
@@ -60,8 +60,8 @@ class Asekii::Terminal
     @identifying.synchronize do
       return @identity if @identified.get
       version = request(Query::Version, VERSION_QUERY, limit, probe: true)
-      device  = request(Query::Device, DEVICE_QUERY, limit, probe: true)
-      found   = Identity.from(version.as?(String), device.as?(Device))
+      device = request(Query::Device, DEVICE_QUERY, limit, probe: true)
+      found = Identity.from(version.as?(String), device.as?(Device))
       if found || version || device
         @identity = found
         @identified.set(true)

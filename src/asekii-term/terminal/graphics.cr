@@ -266,7 +266,7 @@ class Asekii::Terminal
 
   def sixel_code(pixels : Pixels, columns : Int32 = 0, rows : Int32 = 0) : String
     raster = pixels.raster || return ""
-    width  = @cell_width.get
+    width = @cell_width.get
     height = @cell_height.get
     raster = raster.scale(columns * width, rows * height) if columns > 0 && rows > 0 && width > 0 && height > 0
     raster.to_sixel
@@ -372,8 +372,8 @@ class Asekii::Terminal
     data = pixels.data
     size = pixels.size
     if pixels.compress && pixels.medium.direct?
-      raw    = data.is_a?(IO) ? data.getb_to_end : data
-      size   = raw.size if pixels.format.png?
+      raw = data.is_a?(IO) ? data.getb_to_end : data
+      size = raw.size if pixels.format.png?
       packed = IO::Memory.new
       Compress::Zlib::Writer.open(packed, &.write(raw))
       data = packed.to_slice
@@ -383,12 +383,12 @@ class Asekii::Terminal
   end
 
   private def draw(control : String, source : Bytes | IO, id : UInt32, number : UInt32, quiet : Quiet, limit : Time::Span, action : String = "", probe : Bool = false) : Event::Ack?
-    key  = number != 0 ? "I#{number}" : "i#{id}"
+    key = number != 0 ? "I#{number}" : "i#{id}"
     wait = quiet.none? && (id != 0 || number != 0)
     waiter = exclusive(Family::Graphics) do
       pending = nil
-      whole   = probe ? Bytewire.new(256) : nil
-      first   = true
+      whole = probe ? Bytewire.new(256) : nil
+      first = true
       chunks(control, source, quiet, action) do |code|
         if whole
           whole.str(code)
@@ -411,7 +411,7 @@ class Asekii::Terminal
   end
 
   private def chunks(control : String, source : Bytes | IO, quiet : Quiet, action : String, & : String ->) : Nil
-    more  = merge(',', action, keys(',', {'q', quiet.value}))
+    more = merge(',', action, keys(',', {'q', quiet.value}))
     first = true
     blocks(source) do |chunk, last|
       yield Asekii::Terminal.build { |wire|

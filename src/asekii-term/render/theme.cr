@@ -2,10 +2,9 @@
 require "./theme_enums"
 
 module Asekii::Render
-
   class Theme
-    getter name       : String
-    getter source     : PaletteSource
+    getter name : String
+    getter source : PaletteSource
     getter harmonious : Bool
 
     @fg : UInt32?
@@ -109,66 +108,66 @@ module Asekii::Render
       Roles::Core::Hover,
     ]
 
-    getter palette   : Palette
-    getter terminal  : Palette
-    getter queried   : Palette
-    getter current   : Theme?
-    getter mode      : ThemeMode
-    getter delivery  : ThemeDelivery
-    getter depth     : ColorDepth
-    getter? snap     : Bool
-    getter? indexed  : Bool
-    getter? known    : Bool
+    getter palette : Palette
+    getter terminal : Palette
+    getter queried : Palette
+    getter current : Theme?
+    getter mode : ThemeMode
+    getter delivery : ThemeDelivery
+    getter depth : ColorDepth
+    getter? snap : Bool
+    getter? indexed : Bool
+    getter? known : Bool
     getter? querying : Bool
 
-    property duration        : Time::Span
-    property easing          : Easing
-    property space           : BlendSpace
-    property contrast_model  : ContrastModel
+    property duration : Time::Span
+    property easing : Easing
+    property space : BlendSpace
+    property contrast_model : ContrastModel
     property? extend_palette : Bool
 
-    property output     : Proc(Bytewire)                         = -> : Bytewire { raise "Themes#output is not wired" }
-    property running    : Proc(Bool)                             = -> { false }
-    property querier    : Proc(Proc(Survey?, Nil), Nil)          = ->(done : Proc(Survey?, Nil)) { done.call(nil) }
-    property ticker     : Proc(Time::Span, Proc(Nil), Proc(Nil)) = ->(span : Time::Span, tick : Proc(Nil)) { -> { nil } }
-    property on_theme   : Proc(String?, Nil)                     = ->(name : String?) { nil }
-    property on_palette : Proc(Nil)                              = -> { nil }
+    property output : Proc(Bytewire) = -> : Bytewire { raise "Themes#output is not wired" }
+    property running : Proc(Bool) = -> { false }
+    property querier : Proc(Proc(Survey?, Nil), Nil) = ->(done : Proc(Survey?, Nil)) { done.call(nil) }
+    property ticker : Proc(Time::Span, Proc(Nil), Proc(Nil)) = ->(span : Time::Span, tick : Proc(Nil)) { -> { nil } }
+    property on_theme : Proc(String?, Nil) = ->(name : String?) { nil }
+    property on_palette : Proc(Nil) = -> { nil }
 
-    @dark        : String?
-    @light       : String?
+    @dark : String?
+    @light : String?
     @system_dark : Bool?
-    @animation   : (-> Nil)?
-    @quantized   : Array(Paint)?
+    @animation : (-> Nil)?
+    @quantized : Array(Paint)?
 
     def initialize
-      @queried        = Palette.stock
-      @terminal       = Palette.stock
-      @palette        = Palette.stock
-      @themes         = {} of String => Theme
-      @roles          = [] of Paint
-      @current        = nil
-      @mode           = ThemeMode::Auto
-      @delivery       = ThemeDelivery::Auto
-      @depth          = ColorDepth.detect
-      @depth_fixed    = false
-      @snap           = false
-      @indexed        = true
-      @known          = false
-      @querying       = false
-      @pushed         = false
-      @stacked        = false
-      @query          = 0
-      @duration       = 250.milliseconds
-      @easing         = Easing::InOut
-      @space          = BlendSpace::Oklab
+      @queried = Palette.stock
+      @terminal = Palette.stock
+      @palette = Palette.stock
+      @themes = {} of String => Theme
+      @roles = [] of Paint
+      @current = nil
+      @mode = ThemeMode::Auto
+      @delivery = ThemeDelivery::Auto
+      @depth = ColorDepth.detect
+      @depth_fixed = false
+      @snap = false
+      @indexed = true
+      @known = false
+      @querying = false
+      @pushed = false
+      @stacked = false
+      @query = 0
+      @duration = 250.milliseconds
+      @easing = Easing::InOut
+      @space = BlendSpace::Oklab
       @contrast_model = ContrastModel::Wcag
       @extend_palette = true
-      @dark           = nil
-      @light          = nil
-      @system_dark    = nil
-      @animation      = nil
-      @quantized      = nil
-      @roles          = settle(nil, @palette)
+      @dark = nil
+      @light = nil
+      @system_dark = nil
+      @animation = nil
+      @quantized = nil
+      @roles = settle(nil, @palette)
     end
 
     def open : Nil
@@ -226,9 +225,9 @@ module Asekii::Render
     end
 
     def pair(dark : String | Symbol, light : String | Symbol, mode : ThemeMode = ThemeMode::Auto) : Nil
-      @dark  = self[dark].name
+      @dark = self[dark].name
       @light = self[light].name
-      @mode  = mode
+      @mode = mode
       follow(Time::Span.zero)
     end
 
@@ -317,7 +316,7 @@ module Asekii::Render
       return unless running.call
       restore
       @querying = true
-      serial    = (@query += 1)
+      serial = (@query += 1)
       querier.call(->(found : Survey?) { learn(found) if serial == @query })
     end
 
@@ -377,21 +376,21 @@ module Asekii::Render
 
     private def go(theme : Theme?, duration : Time::Span, easing : Easing) : Nil
       halt
-      before   = @current
-      goal     = target(theme)
-      roles    = settle(theme, goal)
+      before = @current
+      goal = target(theme)
+      roles = settle(theme, goal)
       @current = theme
-      native   = (before.nil? || before.source.terminal?) && (theme.nil? || theme.source.terminal?)
-      reduced  = !pushing? && !@depth.true_color?
+      native = (before.nil? || before.source.terminal?) && (theme.nil? || theme.source.terminal?)
+      reduced = !pushing? && !@depth.true_color?
       if duration <= Time::Span.zero || !running.call || native || reduced
         show(goal, roles)
         on_theme.call(theme.try(&.name))
         return
       end
-      origin  = @palette.dup
+      origin = @palette.dup
       started = Time.instant
-      shades  = @roles.map { |paint| Pile.rgb(paint, origin) }
-      paints  = @roles.dup
+      shades = @roles.map { |paint| Pile.rgb(paint, origin) }
+      paints = @roles.dup
       @animation = ticker.call(STEP, -> {
         amount = ((Time.instant - started) / duration).clamp(0.0, 1.0)
         if amount >= 1.0
@@ -452,7 +451,7 @@ module Asekii::Render
 
     private def show(palette : Palette, roles : Array(Paint)) : Nil
       @palette = palette
-      @roles   = roles
+      @roles = roles
       if pushing?
         push(palette)
         @indexed = true
@@ -480,7 +479,7 @@ module Asekii::Render
       end.sort_by!(&.[1])
       prev = -1
       entries.each do |(role, _)|
-        slot  = role.value
+        slot = role.value
         index = table[slot].value.to_i
         index = prev + 1 if index <= prev
         index = Palette::SIZE - 1 if index >= Palette::SIZE
@@ -490,7 +489,7 @@ module Asekii::Render
     end
 
     private def quantize_ansi16(roles : Array(Paint), palette : Palette, table : Array(Paint)) : Nil
-      bg     = @terminal.nearest(palette.bg, Palette::CUBE).to_i
+      bg = @terminal.nearest(palette.bg, Palette::CUBE).to_i
       raised = bg == 0 ? 8 : 0
       roles.size.times do |slot|
         rgb = Pile.rgb(roles.unsafe_fetch(slot), palette)
@@ -510,7 +509,7 @@ module Asekii::Render
       return if palette.same?(@terminal)
       target = output.call
       unless @pushed
-        @pushed  = true
+        @pushed = true
         @stacked = @known
         target.str(PUSH) if @stacked
       end
@@ -526,7 +525,7 @@ module Asekii::Render
     private def restore : Nil
       return unless @pushed
       output.call.str(@stacked ? POP : RESET)
-      @pushed  = false
+      @pushed = false
       @stacked = false
       @terminal.copy(@queried)
     end

@@ -35,7 +35,7 @@ describe "SGR output" do
 
   it "tints the underline color under a translucent overlay and drops it on blank cells" do
     stage = Engine.new(4, 1)
-    low   = stage.plane(4, 1)
+    low = stage.plane(4, 1)
     scrim = stage.plane(1, 1)
     low.put(0, 0, "ab", attrs: Asekii::Render::Attr::Underline, line: "#ffffff", bg: "#ffffff")
     low.put(2, 0, " ", line: "#ffffff")
@@ -82,7 +82,7 @@ describe "hyperlinks" do
   it "links the text under a glyphless overlay, keeps linked blanks, and rejects control characters" do
     stage = Engine.new(8, 1)
     plane = stage.plane(8, 1)
-    zone  = stage.plane(2, 1, 6, 0)
+    zone = stage.plane(2, 1, 6, 0)
     plane.put(5, 0, "abc", link: "https://b.example")
     zone.fill(link: "https://a.example")
     plane.fill(0, 0, 5, 1, link: "https://a.example")
@@ -234,7 +234,7 @@ describe Asekii::Render::Sprite do
     plane = stage.plane(10, 4, 2, 1)
     plane.put(0, 0, "under")
     image = plane.sprite(77_u32, 1, 0, 4, 2)
-    wire  = stage.frame
+    wire = stage.frame
     under = Asekii::Render::Sprite::BELOW_CELLS - 0
     wire.should contain("\e[2;4H\e_Ga=p,i=77,q=1,p=#{image.placement_id},c=4,r=2,z=#{under},C=1\e\\")
     stage.at(2, 1).text.should eq("u")
@@ -285,11 +285,11 @@ describe Asekii::Render::Sprite do
 
   it "hides a clipped image whose pixel size is unknown and orders stacked images" do
     stage = Engine.new(10, 4)
-    low   = stage.plane(10, 4)
-    high  = stage.plane(10, 4)
-    one   = low.sprite(1_u32, 0, 0, 2, 2)
-    two   = high.sprite(2_u32, 1, 0, 2, 2)
-    wire  = stage.frame
+    low = stage.plane(10, 4)
+    high = stage.plane(10, 4)
+    one = low.sprite(1_u32, 0, 0, 2, 2)
+    two = high.sprite(2_u32, 1, 0, 2, 2)
+    wire = stage.frame
     wire.should contain("i=2,q=1,p=#{two.placement_id},c=2,r=2,z=#{Asekii::Render::Sprite::BELOW_CELLS},C=1")
     wire.should contain("i=1,q=1,p=#{one.placement_id},c=2,r=2,z=#{Asekii::Render::Sprite::BELOW_CELLS - 1},C=1")
     two.move(9, 0)
@@ -330,7 +330,7 @@ describe "scrolling" do
   it "scrolls the terminal region and paints only the new line" do
     stage = Engine.new(8, 6)
     title = stage.plane(8, 1)
-    log   = stage.plane(8, 4, 0, 1)
+    log = stage.plane(8, 4, 0, 1)
     title.put(0, 0, "title")
     4.times { |row| log.put(0, row, "line #{row}") }
     stage.frame
@@ -346,7 +346,7 @@ describe "scrolling" do
 
   it "repaints instead when the plane is narrower than the screen or mostly different" do
     stage = Engine.new(8, 5)
-    side  = stage.plane(4, 5)
+    side = stage.plane(4, 5)
     5.times { |row| side.put(0, row, "r#{row}") }
     stage.frame
     side.scroll(1)

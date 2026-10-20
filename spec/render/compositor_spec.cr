@@ -10,8 +10,8 @@ end
 describe Asekii::Render::Pile do
   it "takes the glyph from the topmost plane that has one" do
     stage = Engine.new
-    low   = stage.plane(10, 1)
-    high  = stage.plane(10, 1)
+    low = stage.plane(10, 1)
+    high = stage.plane(10, 1)
     low.put(0, 0, "lower")
     high.put(1, 0, "UP")
     stage.frame
@@ -20,8 +20,8 @@ describe Asekii::Render::Pile do
 
   it "clips a plane to its bounds and to the bounds of the plane above it" do
     stage = Engine.new
-    low   = stage.plane(10, 1)
-    high  = stage.plane(6, 1, 2, 0)
+    low = stage.plane(10, 1)
+    high = stage.plane(6, 1, 2, 0)
     inner = high.plane(6, 1)
     low.put(0, 0, "abcdefghij")
     high.put(0, 0, "UPPER!")
@@ -67,8 +67,8 @@ describe Asekii::Render::Pile do
 
   it "hides glyphs under an opaque background" do
     stage = Engine.new
-    low   = stage.plane(4, 1)
-    high  = stage.plane(2, 1)
+    low = stage.plane(4, 1)
+    high = stage.plane(2, 1)
     low.put(0, 0, "abcd")
     high.fill(bg: 1)
     stage.frame
@@ -79,7 +79,7 @@ describe Asekii::Render::Pile do
 
   it "tints the glyph and the background under a translucent overlay" do
     stage = Engine.new
-    low   = stage.plane(4, 1)
+    low = stage.plane(4, 1)
     scrim = stage.plane(2, 1)
     white = Asekii::Render::Paint.rgb(255_u8, 255_u8, 255_u8)
     low.put(0, 0, "ab", fg: white, bg: white)
@@ -95,7 +95,7 @@ describe Asekii::Render::Pile do
   it "blends in the configured space" do
     stage = Engine.new
     stage.compositor.blend = Asekii::Render::BlendSpace::Lab
-    low   = stage.plane(2, 1)
+    low = stage.plane(2, 1)
     scrim = stage.plane(2, 1)
     low.fill(bg: "#ffffff")
     scrim.fill(bg: {"#000000", 0.5})
@@ -106,7 +106,7 @@ describe Asekii::Render::Pile do
 
   it "recomposes when the blend space changes" do
     stage = Engine.new
-    low   = stage.plane(2, 1)
+    low = stage.plane(2, 1)
     scrim = stage.plane(2, 1)
     low.fill(bg: "#ffe000")
     scrim.fill(bg: {"#0000ff", 0.5})
@@ -145,9 +145,9 @@ describe Asekii::Render::Pile do
   end
 
   it "multiplies opacity and visibility down the binding chain" do
-    stage  = Engine.new
+    stage = Engine.new
     parent = stage.plane(4, 1)
-    child  = parent.plane(2, 1)
+    child = parent.plane(2, 1)
     child.fill(bg: "#ffffff")
     parent.opacity = 0.5
     stage.frame
@@ -179,8 +179,8 @@ describe Asekii::Render::Pile do
 
   it "follows the z order as planes are restacked" do
     stage = Engine.new
-    one   = stage.plane(1, 1)
-    two   = stage.plane(1, 1)
+    one = stage.plane(1, 1)
+    two = stage.plane(1, 1)
     one.put(0, 0, "1")
     two.put(0, 0, "2")
     stage.frame
@@ -236,8 +236,8 @@ describe Asekii::Render::Pile do
 
   it "blanks a wide glyph that another plane splits" do
     stage = Engine.new
-    low   = stage.plane(6, 1)
-    high  = stage.plane(1, 1, 1, 0)
+    low = stage.plane(6, 1)
+    high = stage.plane(1, 1, 1, 0)
     low.put(0, 0, "日本", bg: 4)
     stage.frame
     stage.at(0, 0).broken?.should be_false
@@ -263,7 +263,7 @@ describe Asekii::Render::Pile do
 
   it "keeps the image id exact under a translucent overlay" do
     stage = Engine.new
-    low   = stage.plane(4, 1)
+    low = stage.plane(4, 1)
     scrim = stage.plane(4, 1)
     low.image(0, 0, 0x00a1b2c3_u32, 2, 1)
     scrim.fill(bg: {"#000000", 0.5})
@@ -425,7 +425,7 @@ describe Asekii::Render::Compositor do
   it "keeps elevation roles distinct when quantized to 256 colours" do
     stage = Engine.new
     stage.themes.depth = Asekii::Render::ColorDepth::Indexed256
-    hover   = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value)
+    hover = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value)
     overlay = stage.themes.resolve(Asekii::Render::Roles::Core::SurfaceOverlay.value)
     hover.should_not eq(overlay)
   end
@@ -433,7 +433,7 @@ describe Asekii::Render::Compositor do
   it "keeps hover distinct from surface at 16 colours" do
     stage = Engine.new
     stage.themes.depth = Asekii::Render::ColorDepth::Ansi16
-    hover   = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value)
+    hover = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value)
     surface = stage.themes.resolve(Asekii::Render::Roles::Core::Surface.value)
     hover.should_not eq(surface)
   end
@@ -453,10 +453,10 @@ describe Asekii::Render::Compositor do
     stage.themes.define(:light, base16: LIGHT16, fg: 0x4c4f69, bg: 0xeff1f5)
     stage.themes.use(:light)
     stage.themes.depth = Asekii::Render::ColorDepth::Indexed256
-    sunken  = stage.themes.resolve(Asekii::Render::Roles::Core::SurfaceSunken.value).value
+    sunken = stage.themes.resolve(Asekii::Render::Roles::Core::SurfaceSunken.value).value
     surface = stage.themes.resolve(Asekii::Render::Roles::Core::Surface.value).value
-    raised  = stage.themes.resolve(Asekii::Render::Roles::Core::SurfaceRaised.value).value
-    hover   = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value).value
+    raised = stage.themes.resolve(Asekii::Render::Roles::Core::SurfaceRaised.value).value
+    hover = stage.themes.resolve(Asekii::Render::Roles::Core::Hover.value).value
     sunken.should be < surface
     surface.should be <= raised
     raised.should be <= hover

@@ -17,7 +17,7 @@ module Asekii::Render
     LEVELS = [0_u32, 95_u32, 135_u32, 175_u32, 215_u32, 255_u32]
 
     CHROMA_MIN = 0.02_f32
-    HUE_WEIGHT = 4.0_f32
+    HUE_WEIGHT =  4.0_f32
 
     STOCK = Slice(UInt32).new(SIZE) do |index|
       if index < CUBE
@@ -35,15 +35,15 @@ module Asekii::Render
     STOCK_BG = 0x000000_u32
 
     getter colors : Slice(UInt32)
-    property fg   : UInt32
-    property bg   : UInt32
+    property fg : UInt32
+    property bg : UInt32
 
     @coords : Slice(ColorSpace::Triple)?
 
     def initialize(@colors : Slice(UInt32), @fg : UInt32, @bg : UInt32)
       raise ArgumentError.new("a palette holds #{SIZE} colors") unless @colors.size == SIZE
       @coords = nil
-      @near   = {} of UInt32 => UInt8
+      @near = {} of UInt32 => UInt8
       @near16 = {} of UInt32 => UInt8
     end
 
@@ -66,14 +66,14 @@ module Asekii::Render
       16.times { |index| colors[index] = base16[index] }
       6.times do |r|
         along = r / 5.0_f32
-        c0    = ColorSpace.lerp(corners[0], corners[1], along)
-        c1    = ColorSpace.lerp(corners[2], corners[3], along)
-        c2    = ColorSpace.lerp(corners[4], corners[5], along)
-        c3    = ColorSpace.lerp(corners[6], corners[7], along)
+        c0 = ColorSpace.lerp(corners[0], corners[1], along)
+        c1 = ColorSpace.lerp(corners[2], corners[3], along)
+        c2 = ColorSpace.lerp(corners[4], corners[5], along)
+        c3 = ColorSpace.lerp(corners[6], corners[7], along)
         6.times do |g|
           across = g / 5.0_f32
-          c4     = ColorSpace.lerp(c0, c1, across)
-          c5     = ColorSpace.lerp(c2, c3, across)
+          c4 = ColorSpace.lerp(c0, c1, across)
+          c5 = ColorSpace.lerp(c2, c3, across)
           6.times do |b|
             colors[CUBE + 36 * r + 6 * g + b] = ColorSpace.rgb(ColorSpace.lerp(c4, c5, b / 5.0_f32), space)
           end
@@ -147,17 +147,17 @@ module Asekii::Render
       if found = cache[rgb]?
         return found
       end
-      table  = coords
+      table = coords
       target = ColorSpace.oklab(rgb)
-      best   = 0
-      least  = Float32::MAX
-      index  = 0
-      count  = Math.min(limit, SIZE)
+      best = 0
+      least = Float32::MAX
+      index = 0
+      count = Math.min(limit, SIZE)
       while index < count
         gap = ColorSpace.distance(table.unsafe_fetch(index), target)
         if gap < least
           least = gap
-          best  = index
+          best = index
         end
         index += 1
       end
@@ -166,19 +166,19 @@ module Asekii::Render
     end
 
     def nearest_chroma(rgb : UInt32, limit : Int32 = SIZE) : UInt8
-      table  = coords
+      table = coords
       target = ColorSpace.oklab(rgb)
       tl, ta, tb = target
       chroma = Math.sqrt(ta * ta + tb * tb)
-      best   = 0
-      least  = Float32::MAX
+      best = 0
+      least = Float32::MAX
       if chroma < CHROMA_MIN
         {0, 7, 8, 15}.each do |index|
           next unless index < limit
           gap = ColorSpace.distance(table.unsafe_fetch(index), target)
           if gap < least
             least = gap
-            best  = index
+            best = index
           end
         end
         index = RAMP
@@ -187,7 +187,7 @@ module Asekii::Render
           gap = ColorSpace.distance(table.unsafe_fetch(index), target)
           if gap < least
             least = gap
-            best  = index
+            best = index
           end
           index += 1
         end
@@ -202,7 +202,7 @@ module Asekii::Render
           gap = dl * dl + HUE_WEIGHT * (da * da + db * db)
           if gap < least
             least = gap
-            best  = index
+            best = index
           end
           index += 1
         end
