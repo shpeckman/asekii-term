@@ -51,14 +51,14 @@ class Asekii::Terminal
     24 => Event::Named::F12,
   }
 
-  @state   = State::Ground
-  @string  = 0_u8
-  @seq     = Bytewire.new(256)
-  @reader  = Bytewire::Reader.new(Bytes.empty)
+  @state = State::Ground
+  @string = 0_u8
+  @seq = Bytewire.new(256)
+  @reader = Bytewire::Reader.new(Bytes.empty)
   @scratch = Bytewire.new(64)
-  @values  = [] of Int32
-  @starts  = [] of Int32
-  @utf     = Bytewire.new(4)
+  @values = [] of Int32
+  @starts = [] of Int32
+  @utf = Bytewire.new(4)
 
   private def feed(byte : UInt8) : Nil
     case @state
@@ -149,8 +149,8 @@ class Asekii::Terminal
     @utf.reset if byte & 0xc0 != 0x80
     @utf.byte(byte)
     slice = @utf.written
-    lead  = slice[0]
-    need  = lead >= 0xf0 ? 4 : lead >= 0xe0 ? 3 : lead >= 0xc0 ? 2 : 0
+    lead = slice[0]
+    need = lead >= 0xf0 ? 4 : lead >= 0xe0 ? 3 : lead >= 0xc0 ? 2 : 0
     return @utf.reset if need == 0
     return if slice.size < need
     @reader.reset(slice)
@@ -195,7 +195,7 @@ class Asekii::Terminal
     @values.clear
     @starts.clear
     @starts << 0
-    current  = MISSING
+    current = MISSING
     negative = false
     bytes.each do |byte|
       case byte
@@ -205,7 +205,7 @@ class Asekii::Terminal
         negative = true
       when 0x3a, 0x3b
         @values << (negative && current != MISSING ? -current : current)
-        current  = MISSING
+        current = MISSING
         negative = false
         @starts << @values.size if byte == 0x3b
       end
@@ -215,7 +215,7 @@ class Asekii::Terminal
 
   private def param(group : Int32, sub : Int32 = 0, default : Int32 = MISSING) : Int32
     start = @starts[group]? || return default
-    stop  = @starts[group + 1]? || @values.size
+    stop = @starts[group + 1]? || @values.size
     index = start + sub
     return default unless index < stop
     value = @values[index]
@@ -223,7 +223,7 @@ class Asekii::Terminal
   end
 
   private def csi(final : UInt8) : Nil
-    bytes  = @seq.written
+    bytes = @seq.written
     letter = final.unsafe_chr
     parse(bytes)
     case bytes.first?.try(&.unsafe_chr)
@@ -275,7 +275,7 @@ class Asekii::Terminal
     when 48
       resize
     when 4
-      width  = param(2, 0, 0)
+      width = param(2, 0, 0)
       height = param(1, 0, 0)
       if blind?
         rows = @rows.get
@@ -284,7 +284,7 @@ class Asekii::Terminal
       end
       route(Query::Window, Event::Size.new(width, height))
     when 6
-      width  = param(2, 0, 0)
+      width = param(2, 0, 0)
       height = param(1, 0, 0)
       resolve(width, height)
       route(Query::Cell, Event::Size.new(width, height))
@@ -292,10 +292,10 @@ class Asekii::Terminal
   end
 
   private def key(code : Int32) : Nil
-    mods    = Event::Mods.new((param(1, 0, 1) &- 1).to_u8!)
-    action  = Event::Key::Action.from_value?(param(1, 1, 1)) || Event::Key::Action::Press
+    mods = Event::Mods.new((param(1, 0, 1) &- 1).to_u8!)
+    action = Event::Key::Action.from_value?(param(1, 1, 1)) || Event::Key::Action::Press
     shifted = param(0, 1, 0)
-    base    = param(0, 2, 0)
+    base = param(0, 2, 0)
     text = if @starts.size > 2
              @scratch.reset
              (@starts[2]...@values.size).each do |index|
@@ -312,9 +312,9 @@ class Asekii::Terminal
   end
 
   private def mouse(release : Bool) : Nil
-    pb  = param(0, 0, 0)
-    x   = param(1, 0, 0)
-    y   = param(2, 0, 0)
+    pb = param(0, 0, 0)
+    x = param(1, 0, 0)
+    y = param(2, 0, 0)
     low = pb & 3
     action, button =
       if pb.bits_set?(256)
@@ -330,7 +330,7 @@ class Asekii::Terminal
       else
         {Event::Mouse::Action::Press, Event::Mouse::Button.new(pb.bits_set?(128) ? 8 + low : low)}
       end
-    width  = @cell_width.get
+    width = @cell_width.get
     height = @cell_height.get
     if features.pixels?
       col = width > 0 ? x // width : 0
@@ -338,17 +338,17 @@ class Asekii::Terminal
     else
       col = {x - 1, 0}.max
       row = {y - 1, 0}.max
-      x   = col * {width, 1}.max
-      y   = row * {height, 1}.max
+      x = col * {width, 1}.max
+      y = row * {height, 1}.max
     end
     push Event::Mouse.new(action, button, Event::Mods.new(((pb >> 2) & 7).to_u8!), x, y, col, row)
   end
 
   private def resize : Nil
-    rows   = param(1, 0, 0)
-    cols   = param(2, 0, 0)
+    rows = param(1, 0, 0)
+    cols = param(2, 0, 0)
     height = param(3, 0, 0)
-    width  = param(4, 0, 0)
+    width = param(4, 0, 0)
     if resize = span(rows, cols, height, width)
       push resize
       requery
@@ -364,8 +364,8 @@ class Asekii::Terminal
       pair = reader.take_until?(separator) || reader.take_rest
       reader.byte?
       next if pair.empty?
-      sub   = Bytewire::Reader.new(pair)
-      name  = sub.take_until?(0x3d_u8) || sub.take_rest
+      sub = Bytewire::Reader.new(pair)
+      name = sub.take_until?(0x3d_u8) || sub.take_rest
       value = sub.match?(0x3d_u8) ? sub.take_rest : Bytes.empty
       result[String.new(name).strip] = String.new(value).strip
     end
@@ -396,9 +396,9 @@ class Asekii::Terminal
     when 52
       pasted(@reader.take_rest)
     when 5522, 99, DND
-      meta    = @reader.take_until?(0x3b_u8) || @reader.take_rest
+      meta = @reader.take_until?(0x3b_u8) || @reader.take_rest
       payload = @reader.semi? ? String.new(@reader.take_rest) : ""
-      parsed  = fields(meta)
+      parsed = fields(meta)
       case code
       when 5522 then clipboard(parsed, payload)
       when 99   then notified(parsed, payload)
@@ -418,8 +418,8 @@ class Asekii::Terminal
     return unless @reader.match?('G')
     control = @reader.take_until?(0x3b_u8) || @reader.take_rest
     message = @reader.semi? ? String.new(@reader.take_rest) : ""
-    meta    = fields(control, 0x2c_u8)
-    ack     = Event::Ack.new(meta["i"]?.try(&.to_u32?) || 0_u32, meta["I"]?.try(&.to_u32?) || 0_u32, meta["p"]?.try(&.to_u32?) || 0_u32, message)
+    meta = fields(control, 0x2c_u8)
+    ack = Event::Ack.new(meta["i"]?.try(&.to_u32?) || 0_u32, meta["I"]?.try(&.to_u32?) || 0_u32, meta["p"]?.try(&.to_u32?) || 0_u32, message)
     route(Query::Graphics, ack, ack.number != 0 ? "I#{ack.number}" : "i#{ack.image}") || push(ack)
   end
 end

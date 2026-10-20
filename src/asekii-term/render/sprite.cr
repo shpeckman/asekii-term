@@ -10,48 +10,48 @@ module Asekii::Render
       end
     end
 
-    getter plane        : Plane
-    getter image_id     : UInt32
+    getter plane : Plane
+    getter image_id : UInt32
     getter placement_id : UInt32
-    getter x            : Int32
-    getter y            : Int32
-    getter cols         : Int32
-    getter rows         : Int32
-    getter width        : Int32
-    getter height       : Int32
-    getter live         : Placement?
-    getter? disposed    : Bool
-    getter picture      : Raster?
-    getter clip         : Tuple(Int32, Int32, Int32, Int32)?
-    getter? hidden      : Bool
+    getter x : Int32
+    getter y : Int32
+    getter cols : Int32
+    getter rows : Int32
+    getter width : Int32
+    getter height : Int32
+    getter live : Placement?
+    getter? disposed : Bool
+    getter picture : Raster?
+    getter clip : Tuple(Int32, Int32, Int32, Int32)?
+    getter? hidden : Bool
 
     property placed : Placement?
     property? stale : Bool
-    property ink    : String?
-    property inked  : Tuple(Placement, ImageProtocol, Int32, Int32)?
+    property ink : String?
+    property inked : Tuple(Placement, ImageProtocol, Int32, Int32)?
 
     def initialize(@plane : Plane, @pile : Pile, @image_id : UInt32, @placement_id : UInt32,
                    @x : Int32, @y : Int32, @cols : Int32, @rows : Int32,
                    @width : Int32, @height : Int32)
-      @live     = nil
-      @placed   = nil
+      @live = nil
+      @placed = nil
       @disposed = false
-      @picture  = nil
-      @clip     = nil
-      @hidden   = false
-      @stale    = false
-      @ink      = nil
-      @inked    = nil
+      @picture = nil
+      @clip = nil
+      @hidden = false
+      @stale = false
+      @ink = nil
+      @inked = nil
     end
 
     def picture=(raster : Raster?) : Raster?
       return raster if raster ? raster.same?(@picture) : @picture.nil?
       @picture = raster
-      @width   = raster.try(&.width) || 0
-      @height  = raster.try(&.height) || 0
-      @ink     = nil
-      @inked   = nil
-      @stale   = true
+      @width = raster.try(&.width) || 0
+      @height = raster.try(&.height) || 0
+      @ink = nil
+      @inked = nil
+      @stale = true
       scar
       raster
     end
@@ -90,7 +90,7 @@ module Asekii::Render
       return if @disposed
       scar
       @disposed = true
-      @live     = nil
+      @live = nil
       @plane.sprites.delete(self)
       @pile.retire(self)
     end
@@ -107,18 +107,18 @@ module Asekii::Render
 
     private def aim(screen_cols : Int32, screen_rows : Int32, depth : Int32) : Placement?
       return nil if @disposed || @hidden || @cols <= 0 || @rows <= 0 || !@plane.shown? || @plane.strength <= 0.0_f32
-      edges  = @plane.window
-      col    = @plane.abs_x + @x
-      row    = @plane.abs_y + @y
-      floor  = @picture ? screen_rows - 1 : screen_rows
-      left   = Math.max(Math.max(col, edges[0]), 0)
-      top    = Math.max(Math.max(row, edges[1]), 0)
-      right  = Math.min(Math.min(col + @cols, edges[2]), screen_cols)
+      edges = @plane.window
+      col = @plane.abs_x + @x
+      row = @plane.abs_y + @y
+      floor = @picture ? screen_rows - 1 : screen_rows
+      left = Math.max(Math.max(col, edges[0]), 0)
+      top = Math.max(Math.max(row, edges[1]), 0)
+      right = Math.min(Math.min(col + @cols, edges[2]), screen_cols)
       bottom = Math.min(Math.min(row + @rows, edges[3]), floor)
       if fence = @clip
-        left   = Math.max(left, fence[0])
-        top    = Math.max(top, fence[1])
-        right  = Math.min(right, fence[2])
+        left = Math.max(left, fence[0])
+        top = Math.max(top, fence[1])
+        right = Math.min(right, fence[2])
         bottom = Math.min(bottom, fence[3])
       end
       return nil if left >= right || top >= bottom

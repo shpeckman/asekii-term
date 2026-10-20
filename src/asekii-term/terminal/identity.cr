@@ -27,7 +27,7 @@ class Asekii::Terminal
   record Identity, name : String, version : String = "", device : Device? = nil do
     def self.from(text : String?, device : Device?) : Identity?
       if text && !text.empty?
-        open  = text.index('(')
+        open = text.index('(')
         space = text.index(' ')
         if open && (space.nil? || open < space)
           return new(text[0, open].strip, text[open + 1..].rchop(')').strip, device)
@@ -48,7 +48,7 @@ class Asekii::Terminal
   end
 
   @identity : Identity?
-  @identified  = Atomic(Bool).new(false)
+  @identified = Atomic(Bool).new(false)
   @identifying = Sync::Mutex.new
 
   def attributes(limit : Time::Span = @config.query_timeout) : Attributes?
@@ -60,8 +60,8 @@ class Asekii::Terminal
     @identifying.synchronize do
       return @identity if @identified.get
       version = request(Query::Version, VERSION_QUERY, limit, probe: true)
-      device  = request(Query::Device, DEVICE_QUERY, limit, probe: true)
-      found   = Identity.from(version.as?(String), device.as?(Device))
+      device = request(Query::Device, DEVICE_QUERY, limit, probe: true)
+      found = Identity.from(version.as?(String), device.as?(Device))
       if found || version || device
         @identity = found
         @identified.set(true)

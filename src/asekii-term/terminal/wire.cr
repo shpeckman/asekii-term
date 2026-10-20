@@ -77,7 +77,7 @@ class Asekii::Terminal
   getter output : Channel(Output)
 
   @mutexes : Array(Sync::Mutex)
-  @wire    = Sync::Mutex.new
+  @wire = Sync::Mutex.new
   @waiting = {} of {Query, String} => Deque(Request)
 
   def print(*objects) : Nil
@@ -205,8 +205,8 @@ class Asekii::Terminal
 
   private def route(query : Query, reply : Reply, key : String = "", strict : Bool = false) : Bool
     admit
-    slot      = {query, key}
-    queue     = @waiting[slot]? || return false
+    slot = {query, key}
+    queue = @waiting[slot]? || return false
     delivered = false
     while request = queue.shift?
       delivered = deliver(request.waiter, reply)

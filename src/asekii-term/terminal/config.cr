@@ -73,38 +73,38 @@ class Asekii::Terminal
 
   struct Config
     property alternate_screen = true
-    property job_control      = true
-    property detect           = true
-    property signals          = true
-    property enter            = ""
-    property leave            = ""
+    property job_control = true
+    property detect = true
+    property signals = true
+    property enter = ""
+    property leave = ""
     property app_name : String? = nil
-    property clipboard_id       = "term"
-    property busy_retries       = 3
-    property busy_delay         = 100.milliseconds
-    property event_backlog      = 65536
-    property hover_radius       = 4
-    property dnd_id             = 0
-    property event_buffer       = 1024
-    property query_timeout      = 1.second
-    property clipboard_timeout  = 30.seconds
-    property transfer_timeout   = 30.seconds
-    property hold_repeats       = 3
-    property hold_after         = 500.milliseconds
-    property multi_tap_window   = 300.milliseconds
-    property sequence_timeout   = 1.second
-    property click_radius       = 4
-    property click_window       = 300.milliseconds
+    property clipboard_id = "term"
+    property busy_retries = 3
+    property busy_delay = 100.milliseconds
+    property event_backlog = 65536
+    property hover_radius = 4
+    property dnd_id = 0
+    property event_buffer = 1024
+    property query_timeout = 1.second
+    property clipboard_timeout = 30.seconds
+    property transfer_timeout = 30.seconds
+    property hold_repeats = 3
+    property hold_after = 500.milliseconds
+    property multi_tap_window = 300.milliseconds
+    property sequence_timeout = 1.second
+    property click_radius = 4
+    property click_window = 300.milliseconds
     property multi_click_window = 400.milliseconds
-    property long_press_after   = 500.milliseconds
-    property hover_dwell_after  = 500.milliseconds
-    property scroll_window      = 16.milliseconds
-    property scroll_pause       = 200.milliseconds
-    property swipe_velocity     = 500.0
-    property clipboard          = ClipboardProtocol::Auto
-    property notifications      = NotifyProtocol::Auto
-    property multiplexer        = Multiplexer::Auto
-    getter chords    = {} of String => Array(Int32)
+    property long_press_after = 500.milliseconds
+    property hover_dwell_after = 500.milliseconds
+    property scroll_window = 16.milliseconds
+    property scroll_pause = 200.milliseconds
+    property swipe_velocity = 500.0
+    property clipboard = ClipboardProtocol::Auto
+    property notifications = NotifyProtocol::Auto
+    property multiplexer = Multiplexer::Auto
+    getter chords = {} of String => Array(Int32)
     getter sequences = {} of String => Array(Int32)
     getter shortcuts = {} of String => Event::Shortcut
 

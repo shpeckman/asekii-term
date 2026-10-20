@@ -16,9 +16,9 @@ module Asekii::Render
 
     def width(clusters : Array(String), from : Int32 = 0, to : Int32 = clusters.size) : Int32
       segmenter = Graphemes.segmenter
-      stop      = to.clamp(0, clusters.size)
-      index     = Math.max(from, 0)
-      total     = 0
+      stop = to.clamp(0, clusters.size)
+      index = Math.max(from, 0)
+      total = 0
       while index < stop
         total += segmenter.cluster_width(clusters.unsafe_fetch(index)).to_i
         index += 1
@@ -77,7 +77,7 @@ module Asekii::Render
       return "" if width <= 0
 
       segmenter = Graphemes.segmenter
-      bytes     = text.to_slice
+      bytes = text.to_slice
       return text if segmenter.measure(bytes) <= width
 
       cut = segmenter.locate(bytes, column: width - segmenter.measure(tail)).byte
@@ -102,9 +102,9 @@ module Asekii::Render
     def index(clusters : Array(String), column : Int32, from : Int32 = 0, to : Int32 = clusters.size,
               nearest : Bool = false) : Int32
       segmenter = Graphemes.segmenter
-      stop      = to.clamp(0, clusters.size)
-      index     = Math.max(from, 0)
-      edge      = 0
+      stop = to.clamp(0, clusters.size)
+      index = Math.max(from, 0)
+      edge = 0
       while index < stop
         extent = segmenter.cluster_width(clusters.unsafe_fetch(index)).to_i
         return index if column < edge + (nearest ? (extent + 1) // 2 : extent)
@@ -116,8 +116,8 @@ module Asekii::Render
 
     def fit_tail(clusters : Array(String), cols : Int32, to : Int32 = clusters.size) : Int32
       segmenter = Graphemes.segmenter
-      index     = to.clamp(0, clusters.size)
-      used      = 0
+      index = to.clamp(0, clusters.size)
+      used = 0
       while index > 0
         extent = segmenter.cluster_width(clusters.unsafe_fetch(index - 1)).to_i
         break if used + extent > cols

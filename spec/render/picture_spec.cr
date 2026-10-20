@@ -62,9 +62,9 @@ describe Asekii::Raster do
   end
 
   it "round-trips through its own PNG encoder" do
-    data   = Bytes.new(7 * 5 * 4) { |index| (index * 37 % 256).to_u8 }
+    data = Bytes.new(7 * 5 * 4) { |index| (index * 37 % 256).to_u8 }
     raster = Asekii::Raster.rgba(data, 7, 5).not_nil!
-    back   = Asekii::Raster.png(raster.to_png).not_nil!
+    back = Asekii::Raster.png(raster.to_png).not_nil!
     back.data.should eq(raster.data)
   end
 
@@ -86,7 +86,7 @@ describe Asekii::Raster do
   it "leaves transparent pixels unpainted and keeps to the colour limit" do
     clear = solid(4, 6, {9_u8, 9_u8, 9_u8, 0_u8}).to_sixel
     clear.should eq("\eP0;1;0q\"1;1;4;6\e\\")
-    data  = Bytes.new(64 * 64 * 4) { |index| index % 4 == 3 ? 255_u8 : (index * 13 % 256).to_u8 }
+    data = Bytes.new(64 * 64 * 4) { |index| index % 4 == 3 ? 255_u8 : (index * 13 % 256).to_u8 }
     sixel = Asekii::Raster.rgba(data, 64, 64).not_nil!.to_sixel
     sixel.scan(/#(\d+);2;/).size.should be <= 255
     sixel.count('-').should eq(10)

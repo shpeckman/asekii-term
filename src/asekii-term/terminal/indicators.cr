@@ -12,13 +12,13 @@ class Asekii::Terminal
     Paused        = 4
   end
 
-  @title    : String?
+  @title : String?
   @progress : String?
 
   def title=(text : String) : String
     clean = text.gsub(CONTROLS, ' ')
     sequence = @wire.synchronize do
-      saved  = @title.nil?
+      saved = @title.nil?
       @title = clean
       "#{saved ? TITLE_SAVE : ""}\e]2;#{clean}\e\\"
     end
@@ -32,7 +32,7 @@ class Asekii::Terminal
 
   def reset_title : Nil
     sequence = @wire.synchronize do
-      held   = @title
+      held = @title
       @title = nil
       held ? TITLE_RESTORE : ""
     end
@@ -44,7 +44,7 @@ class Asekii::Terminal
   end
 
   def progress(value : Float64 = 0.0, state : Progress = Progress::Normal) : Nil
-    percent  = (value.clamp(0.0, 1.0) * 100).round.to_i
+    percent = (value.clamp(0.0, 1.0) * 100).round.to_i
     sequence = state.indeterminate? ? "\e]9;4;3\e\\" : "\e]9;4;#{state.value};#{percent}\e\\"
     @wire.synchronize { @progress = sequence }
     @output.send(sequence)
@@ -52,7 +52,7 @@ class Asekii::Terminal
 
   def clear_progress : Nil
     shown = @wire.synchronize do
-      held      = @progress
+      held = @progress
       @progress = nil
       !held.nil?
     end

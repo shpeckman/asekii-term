@@ -25,8 +25,8 @@ module Asekii
     SHADES        =  32768
     RUN_MIN       =      4
 
-    getter data   : Bytes
-    getter width  : Int32
+    getter data : Bytes
+    getter width : Int32
     getter height : Int32
 
     def initialize(@data : Bytes, @width : Int32, @height : Int32)
@@ -56,29 +56,29 @@ module Asekii
 
     def self.png(source : Bytes) : Raster?
       return unless source.size > 8 && source[0, 8] == PNG_SIGNATURE
-      offset    = 8
-      width     = 0
-      height    = 0
-      depth     = 0
-      kind      = -1
+      offset = 8
+      width = 0
+      height = 0
+      depth = 0
+      kind = -1
       interlace = 0
-      palette   = Bytes.empty
-      alphas    = Bytes.empty
-      key       = Bytes.empty
-      packed    = IO::Memory.new
+      palette = Bytes.empty
+      alphas = Bytes.empty
+      key = Bytes.empty
+      packed = IO::Memory.new
       while offset + 8 <= source.size
         length = IO::ByteFormat::BigEndian.decode(UInt32, source[offset, 4]).to_i
-        name   = String.new(source[offset + 4, 4])
-        start  = offset + 8
+        name = String.new(source[offset + 4, 4])
+        start = offset + 8
         return if length < 0 || start + length > source.size
         body = source[start, length]
         case name
         when "IHDR"
           return if length < 13
-          width     = IO::ByteFormat::BigEndian.decode(UInt32, body[0, 4]).to_i
-          height    = IO::ByteFormat::BigEndian.decode(UInt32, body[4, 4]).to_i
-          depth     = body[8].to_i
-          kind      = body[9].to_i
+          width = IO::ByteFormat::BigEndian.decode(UInt32, body[0, 4]).to_i
+          height = IO::ByteFormat::BigEndian.decode(UInt32, body[4, 4]).to_i
+          depth = body[8].to_i
+          kind = body[9].to_i
           interlace = body[12].to_i
         when "PLTE" then palette = body
         when "tRNS"
@@ -93,18 +93,18 @@ module Asekii
       return if depth < 8 && !kind.in?(0, 3)
       return if depth == 16 && kind == 3
       inflated = Compress::Zlib::Reader.open(IO::Memory.new(packed.to_slice)) { |reader| reader.getb_to_end }
-      pixels   = Bytes.new(width * height * 4)
-      bits     = channels * depth
-      step     = Math.max(bits // 8, 1)
-      cursor   = 0
-      passes   = interlace == 1 ? ADAM7 : { {0, 0, 1, 1} }
+      pixels = Bytes.new(width * height * 4)
+      bits = channels * depth
+      step = Math.max(bits // 8, 1)
+      cursor = 0
+      passes = interlace == 1 ? ADAM7 : { {0, 0, 1, 1} }
       passes.each do |(left, top, dx, dy)|
         cols = left >= width ? 0 : (width - left + dx - 1) // dx
         rows = top >= height ? 0 : (height - top + dy - 1) // dy
         next if cols == 0 || rows == 0
-        stride   = (cols * bits + 7) // 8
+        stride = (cols * bits + 7) // 8
         previous = Bytes.new(stride)
-        current  = Bytes.new(stride)
+        current = Bytes.new(stride)
         rows.times do |row|
           return if cursor + 1 + stride > inflated.size
           filter = inflated[cursor]
@@ -138,7 +138,7 @@ module Asekii
         end
       when 4
         row.size.times do |index|
-          left   = index >= step ? row[index - step].to_i : 0
+          left = index >= step ? row[index - step].to_i : 0
           corner = index >= step ? above[index - step].to_i : 0
           row[index] = row[index] &+ paeth(left, above[index].to_i, corner).to_u8
         end
@@ -150,9 +150,9 @@ module Asekii
 
     private def self.paeth(left : Int32, up : Int32, corner : Int32) : Int32
       guess = left + up - corner
-      a     = (guess - left).abs
-      b     = (guess - up).abs
-      c     = (guess - corner).abs
+      a = (guess - left).abs
+      b = (guess - up).abs
+      c = (guess - corner).abs
       a <= b && a <= c ? left : b <= c ? up : corner
     end
 
@@ -169,11 +169,11 @@ module Asekii
     private def self.texel(row : Bytes, col : Int32, depth : Int32, kind : Int32, palette : Bytes, alphas : Bytes,
                            key : Bytes, pixels : Bytes, at : Int32) : Nil
       shift = depth == 16 ? 8 : 0
-      peak  = (1 << depth) - 1
+      peak = (1 << depth) - 1
       case kind
       when 0
         value = sample(row, col, depth)
-        gray  = depth < 8 ? value * 255 // peak : value >> shift
+        gray = depth < 8 ? value * 255 // peak : value >> shift
         clear = key.size >= 2 && value == ((key[0].to_i << 8) | key[1].to_i)
         put(pixels, at, gray, gray, gray, clear ? 0 : 255)
       when 2
@@ -206,7 +206,7 @@ module Asekii
     end
 
     def self.crop(data : Bytes, width : Int32, x : Int32, y : Int32, cols : Int32, rows : Int32, channels : Int32) : Bytes
-      bytes  = Bytes.new(cols * rows * channels)
+      bytes = Bytes.new(cols * rows * channels)
       stride = cols * channels
       rows.times do |row|
         source = ((y + row) * width + x) * channels
@@ -217,7 +217,7 @@ module Asekii
 
     def crop(x : Int32, y : Int32, width : Int32, height : Int32) : Raster
       left = x.clamp(0, @width - 1)
-      top  = y.clamp(0, @height - 1)
+      top = y.clamp(0, @height - 1)
       cols = width.clamp(1, @width - left)
       rows = height.clamp(1, @height - top)
       return self if left == 0 && top == 0 && cols == @width && rows == @height
@@ -225,7 +225,7 @@ module Asekii
     end
 
     def scale(width : Int32, height : Int32) : Raster
-      width  = Math.max(width, 1)
+      width = Math.max(width, 1)
       height = Math.max(height, 1)
       return self if width == @width && height == @height
       wide = Slice(Float32).new(@width * @height * 4)
@@ -237,7 +237,7 @@ module Asekii
         wide[index * 4 + 3] = alpha * 255.0_f32
       end
       across = Raster.resample(wide, @width, @height, width, true)
-      down   = Raster.resample(across, width, @height, height, false)
+      down = Raster.resample(across, width, @height, height, false)
       pixels = Bytes.new(width * height * 4)
       (width * height).times do |index|
         alpha = down[index * 4 + 3]
@@ -254,15 +254,15 @@ module Asekii
     end
 
     protected def self.resample(source : Slice(Float32), cols : Int32, rows : Int32, size : Int32, horizontal : Bool) : Slice(Float32)
-      length  = horizontal ? cols : rows
-      ratio   = length / size
+      length = horizontal ? cols : rows
+      ratio = length / size
       support = Math.max(ratio, 1.0)
-      target  = horizontal ? Slice(Float32).new(size * rows * 4) : Slice(Float32).new(cols * size * 4)
+      target = horizontal ? Slice(Float32).new(size * rows * 4) : Slice(Float32).new(cols * size * 4)
       size.times do |position|
         center = (position + 0.5) * ratio - 0.5
-        first  = Math.max((center - support).floor.to_i + 1, 0)
-        last   = Math.min((center + support).ceil.to_i - 1, length - 1)
-        last   = first if last < first
+        first = Math.max((center - support).floor.to_i + 1, 0)
+        last = Math.min((center + support).ceil.to_i - 1, length - 1)
+        last = first if last < first
         weights = Array(Float32).new(last - first + 1) do |offset|
           distance = ((first + offset - center) / support).abs
           Math.max(1.0 - distance, 0.0).to_f32
@@ -338,7 +338,7 @@ module Asekii
       end
       count = palette.size
       masks = Bytes.new(Math.max(count, 1) * @width)
-      used  = Slice(Bool).new(Math.max(count, 1), false)
+      used = Slice(Bool).new(Math.max(count, 1), false)
       order = [] of Int32
       bands = (@height + 5) // 6
       bands.times do |band|
@@ -399,13 +399,13 @@ module Asekii
     private struct Box
       getter shades : Array(Int32)
       getter weight : Int64
-      getter axis   : Int32
-      getter score  : Int64
+      getter axis : Int32
+      getter score : Int64
 
       def initialize(@shades : Array(Int32), counts : Slice(Int32))
         @weight = @shades.sum(0_i64) { |shade| counts[shade].to_i64 }
-        lows    = StaticArray(Int32, 3).new(31)
-        highs   = StaticArray(Int32, 3).new(0)
+        lows = StaticArray(Int32, 3).new(31)
+        highs = StaticArray(Int32, 3).new(0)
         @shades.each do |shade|
           3.times do |axis|
             value = Raster.channel(shade, axis)
@@ -413,7 +413,7 @@ module Asekii
             highs[axis] = value if value > highs[axis]
           end
         end
-        @axis  = (0..2).max_by { |axis| highs[axis] - lows[axis] }
+        @axis = (0..2).max_by { |axis| highs[axis] - lows[axis] }
         spread = highs[@axis] - lows[@axis]
         @score = @shades.size < 2 ? 0_i64 : @weight * (spread + 1)
       end
@@ -421,13 +421,13 @@ module Asekii
 
     private def quantize : Tuple(Array(UInt32), Bytes)
       counts = Slice(Int32).new(SHADES, 0)
-      sums   = Slice(Int64).new(SHADES * 3, 0_i64)
+      sums = Slice(Int64).new(SHADES * 3, 0_i64)
       pixels = @width * @height
       pixels.times do |index|
         next if @data.unsafe_fetch(index * 4 + 3) < OPAQUE
-        r     = @data.unsafe_fetch(index * 4).to_i
-        g     = @data.unsafe_fetch(index * 4 + 1).to_i
-        b     = @data.unsafe_fetch(index * 4 + 2).to_i
+        r = @data.unsafe_fetch(index * 4).to_i
+        g = @data.unsafe_fetch(index * 4 + 1).to_i
+        b = @data.unsafe_fetch(index * 4 + 2).to_i
         shade = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)
         counts[shade] += 1
         sums[shade * 3] += r
@@ -435,15 +435,15 @@ module Asekii
         sums[shade * 3 + 2] += b
       end
       present = (0...SHADES).select { |shade| counts[shade] > 0 }
-      boxes   = present.empty? ? [] of Box : [Box.new(present, counts)]
+      boxes = present.empty? ? [] of Box : [Box.new(present, counts)]
       while boxes.size < COLORS
         best = boxes.each_index.max_by? { |position| boxes[position].score } || break
         break if boxes[best].score == 0
-        box    = boxes.delete_at(best)
-        axis   = box.axis
+        box = boxes.delete_at(best)
+        axis = box.axis
         shades = box.shades.sort_by { |shade| Raster.channel(shade, axis) }
-        seen   = 0_i64
-        cut    = 1
+        seen = 0_i64
+        cut = 1
         shades.each_with_index do |shade, position|
           seen += counts[shade]
           if seen * 2 >= box.weight
@@ -454,7 +454,7 @@ module Asekii
         boxes << Box.new(shades[0, cut], counts)
         boxes << Box.new(shades[cut..], counts)
       end
-      table   = Slice(UInt8).new(SHADES, CLEAR)
+      table = Slice(UInt8).new(SHADES, CLEAR)
       palette = [] of UInt32
       boxes.each do |box|
         r = g = b = 0_i64
