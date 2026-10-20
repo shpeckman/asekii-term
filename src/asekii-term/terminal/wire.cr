@@ -1,4 +1,4 @@
-# src/asekii/terminal/wire.cr
+# src/asekii-term/terminal/wire.cr
 module Asekii::Event
   alias Raw = Key | Mouse | Resize | Focus | Visibility | ColorScheme | Paste | Notification | Drop | Drag | Ack | Resume
 

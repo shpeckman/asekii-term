@@ -1,4 +1,4 @@
-# src/asekii/unicode_placeholder.cr
+# src/asekii-term/common/unicode_placeholder.cr
 module Asekii::UnicodePlaceholder
   CHAR = '\u{10EEEE}'
 

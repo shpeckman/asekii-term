@@ -1,4 +1,4 @@
-# src/asekii/color_syntax.cr
+# src/asekii-term/common/color_syntax.cr
 require "bytewire"
 
 module Asekii

@@ -1,4 +1,4 @@
-# src/asekii/render/stroke.cr
+# src/asekii-term/render/stroke.cr
 module Asekii::Render
   struct Stroke
     enum Piece : UInt8

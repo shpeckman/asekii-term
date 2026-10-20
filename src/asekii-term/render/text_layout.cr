@@ -1,4 +1,4 @@
-# src/asekii/render/text_layout.cr
+# src/asekii-term/render/text_layout.cr
 module Asekii::Render
   alias Wrap = ::TermWidth::Wrap
   alias CharClass = ::TermWidth::CharClass

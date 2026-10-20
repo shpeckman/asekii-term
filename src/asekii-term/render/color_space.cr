@@ -1,4 +1,4 @@
-# src/asekii/render/color_space.cr
+# src/asekii-term/render/color_space.cr
 module Asekii::Render
   enum BlendSpace
     Linear

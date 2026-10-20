@@ -1,4 +1,4 @@
-# src/asekii/render/stroke_images.cr
+# src/asekii-term/render/stroke_images.cr
 module Asekii::Render
   class StrokeImages
     FIRST  = 0x00F0_0000_u32

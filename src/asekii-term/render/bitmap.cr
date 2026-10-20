@@ -1,4 +1,4 @@
-# src/asekii/render/bitmap.cr
+# src/asekii-term/render/bitmap.cr
 module Asekii::Render
   class Bitmap
     record Rect, x : Int32, y : Int32, width : Int32, height : Int32

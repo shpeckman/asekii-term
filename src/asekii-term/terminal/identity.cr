@@ -1,4 +1,4 @@
-# src/asekii/terminal/identity.cr
+# src/asekii-term/terminal/identity.cr
 class Asekii::Terminal
   VERSION_QUERY = "\e[>0q"
   DEVICE_QUERY  = "\e[>c"

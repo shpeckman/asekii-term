@@ -1,4 +1,4 @@
-# src/asekii/render/pile.cr
+# src/asekii-term/render/pile.cr
 module Asekii::Render
   class Pile
     private struct Accum

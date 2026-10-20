@@ -1,4 +1,4 @@
-# src/asekii/render/theme.cr
+# src/asekii-term/render/theme.cr
 require "./theme_enums"
 
 module Asekii::Render

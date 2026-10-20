@@ -1,4 +1,4 @@
-# src/asekii/terminal/config.cr
+# src/asekii-term/terminal/config.cr
 class Asekii::Terminal
   KEYBOARD = {"\e[>31u", "\e[<u"}
 

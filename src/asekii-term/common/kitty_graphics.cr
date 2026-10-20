@@ -1,4 +1,4 @@
-# src/asekii/kitty_graphics.cr
+# src/asekii-term/common/kitty_graphics.cr
 require "bytewire"
 
 module Asekii

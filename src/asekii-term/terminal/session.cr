@@ -1,4 +1,4 @@
-# src/asekii/terminal/session.cr
+# src/asekii-term/terminal/session.cr
 class Asekii::Terminal
   SCREEN      = {"\e[?1049h", "\e[?1049l"}
   CELL_SIZE   = "\e[16t"

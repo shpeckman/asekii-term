@@ -1,4 +1,4 @@
-# src/asekii/terminal/parser.cr
+# src/asekii-term/terminal/parser.cr
 class Asekii::Terminal
   MISSING    = Int32::MIN
   CSI_LIMIT  = 256

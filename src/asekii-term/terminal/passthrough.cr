@@ -1,4 +1,4 @@
-# src/asekii/terminal/passthrough.cr
+# src/asekii-term/terminal/passthrough.cr
 class Asekii::Terminal
   WRAPPED = {
     Multiplexer::Tmux   => Set{9, 21, 22, 72, 99, 777, 1337, 5522, 30001, 30101},

@@ -1,4 +1,4 @@
-# src/asekii/terminal/notify.cr
+# src/asekii-term/terminal/notify.cr
 module Asekii::Event
   record Notification, kind : Kind, id : String, button : Int32 = 0, untracked : Bool = false do
     enum Kind

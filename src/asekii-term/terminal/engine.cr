@@ -1,4 +1,4 @@
-# src/asekii/terminal/engine.cr
+# src/asekii-term/terminal/engine.cr
 class Asekii::Terminal
   IDLE = 1.hour
 

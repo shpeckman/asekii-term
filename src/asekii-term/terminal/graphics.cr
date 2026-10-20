@@ -1,4 +1,4 @@
-# src/asekii/terminal/graphics.cr
+# src/asekii-term/terminal/graphics.cr
 module Asekii::Event
   record Ack, image : UInt32, number : UInt32, placement : UInt32, message : String do
     def ok? : Bool

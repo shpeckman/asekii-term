@@ -1,4 +1,4 @@
-# src/asekii/render/theme_enums.cr
+# src/asekii-term/render/theme_enums.cr
 module Asekii::Render
   enum ColorDepth
     Ansi16

@@ -1,4 +1,4 @@
-# src/asekii/render/canvas.cr
+# src/asekii-term/render/canvas.cr
 module Asekii::Render
   module Canvas
     abstract def cols : Int32

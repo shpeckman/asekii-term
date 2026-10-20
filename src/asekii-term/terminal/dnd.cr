@@ -1,4 +1,4 @@
-# src/asekii/terminal/dnd.cr
+# src/asekii-term/terminal/dnd.cr
 module Asekii::Event
   @[Flags]
   enum Operation

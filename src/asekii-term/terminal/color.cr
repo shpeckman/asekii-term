@@ -1,4 +1,4 @@
-# src/asekii/terminal/color.cr
+# src/asekii-term/terminal/color.cr
 class Asekii::Terminal
   COLOR_NAMES = <<-NAMES
     aliceblue=f0f8ff antiquewhite=faebd7 antiquewhite1=ffefdb antiquewhite2=eedfcc antiquewhite3=cdc0b0

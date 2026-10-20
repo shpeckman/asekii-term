@@ -1,4 +1,4 @@
-# src/asekii/render/palette.cr
+# src/asekii-term/render/palette.cr
 module Asekii::Render
   class Palette
     SIZE       =  256

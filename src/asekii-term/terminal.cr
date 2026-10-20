@@ -11,10 +11,10 @@ require "tty"
 
 require "termwidth"
 
-require "./unicode_placeholder"
-require "./color_syntax"
-require "./kitty_graphics"
-require "./raster"
+require "./common/unicode_placeholder"
+require "./common/color_syntax"
+require "./common/kitty_graphics"
+require "./common/raster"
 
 module Asekii::Event
 end

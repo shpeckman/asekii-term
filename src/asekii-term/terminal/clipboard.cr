@@ -1,4 +1,4 @@
-# src/asekii/terminal/clipboard.cr
+# src/asekii-term/terminal/clipboard.cr
 class Asekii::Terminal
   PASTE_NAME = "UGFzdGUgZXZlbnQ="
   CHUNK      = 4095

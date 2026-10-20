@@ -1,4 +1,4 @@
-# src/asekii/terminal/indicators.cr
+# src/asekii-term/terminal/indicators.cr
 class Asekii::Terminal
   TITLE_SAVE     = "\e[22;0t"
   TITLE_RESTORE  = "\e[23;0t"

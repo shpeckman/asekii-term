@@ -1,4 +1,4 @@
-# src/asekii/terminal/events.cr
+# src/asekii-term/terminal/events.cr
 module Asekii::Event
   @[Flags]
   enum Mods : UInt8

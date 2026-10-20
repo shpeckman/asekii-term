@@ -1,4 +1,4 @@
-# src/asekii/render/plane.cr
+# src/asekii-term/render/plane.cr
 module Asekii::Render
   record Placeholder, row : Int32, col : Int32, high : Int32 do
     def self.of(glyph : UInt32) : Placeholder?

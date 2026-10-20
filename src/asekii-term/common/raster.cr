@@ -1,4 +1,4 @@
-# src/asekii/raster.cr
+# src/asekii-term/common/raster.cr
 require "bytewire"
 require "compress/zlib"
 require "digest/crc32"

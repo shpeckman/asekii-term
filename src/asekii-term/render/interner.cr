@@ -1,4 +1,4 @@
-# src/asekii/render/interner.cr
+# src/asekii-term/render/interner.cr
 module Asekii::Render
   class Interner(T)
     SHIFT  = 10

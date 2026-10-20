@@ -1,4 +1,4 @@
-# src/asekii/render/compositor.cr
+# src/asekii-term/render/compositor.cr
 module Asekii::Render
   class ::Bytewire
     def cursor_at(row : Int32, col : Int32) : self

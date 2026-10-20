@@ -1,4 +1,4 @@
-# src/asekii/render/role_spec.cr
+# src/asekii-term/render/role_spec.cr
 module Asekii::Render
   struct Blend
     getter from : Paint

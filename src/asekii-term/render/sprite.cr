@@ -1,4 +1,4 @@
-# src/asekii/render/sprite.cr
+# src/asekii-term/render/sprite.cr
 module Asekii::Render
   class Sprite
     BELOW_CELLS = Int32::MIN // 2 - 1

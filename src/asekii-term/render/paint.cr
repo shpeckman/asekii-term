@@ -1,4 +1,4 @@
-# src/asekii/render/paint.cr
+# src/asekii-term/render/paint.cr
 require "termwidth"
 
 module Asekii::Render
