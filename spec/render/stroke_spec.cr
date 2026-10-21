@@ -390,6 +390,53 @@ describe Asekii::Render::StrokeImages do
     pixel(data, 4, 2, 2).should eq(shown(Space.lerp(fill, red, level)))
   end
 
+  it "shows the colour a stroke was painted over on its own plane outside the fill" do
+    stage = Engine.new(1, 1)
+    stage.compositor.cell_pixels(4, 8)
+    stage.compositor.exact_borders = true
+    low = stage.plane(1, 1)
+    low.fill(bg: "#000000")
+    plane = stage.plane(1, 1)
+    plane.fill(bg: "#336699")
+    plane.stroke(0, 0, Stroke.new(Stroke::Piece::Left, width: 2, fill: Stroke::Fill::Inside), "#ff0000", "#ffffff")
+    wire = stage.frame
+    data = payloads(wire)[stage.at(0, 0).fg]
+    pixel(data, 4, 0, 2).should eq(0x336699_u32)
+    pixel(data, 4, 3, 2).should eq(0xffffff_u32)
+    stage.at(0, 0).bg.should eq(0x336699_u32)
+  end
+
+  it "keeps the painted-over colour behind a transparent tile" do
+    stage = Engine.new(1, 1)
+    stage.compositor.cell_pixels(4, 8)
+    plane = stage.plane(1, 1)
+    plane.fill(bg: "#336699")
+    plane.stroke(0, 0, Stroke.new(Stroke::Piece::TopLeft, round: true, fill: Stroke::Fill::Inside), "#ff0000", "#ffffff")
+    stage.frame
+    stage.at(0, 0).bg.should eq(0x336699_u32)
+  end
+
+  it "keeps the first painted-over colour when a stroke is drawn over a stroke" do
+    stage = Engine.new(1, 1)
+    stage.compositor.cell_pixels(4, 8)
+    plane = stage.plane(1, 1)
+    plane.fill(bg: "#336699")
+    plane.stroke(0, 0, Stroke.new(Stroke::Piece::Top, fill: Stroke::Fill::Inside), "#ff0000", "#ffffff")
+    plane.stroke(0, 0, Stroke.new(Stroke::Piece::TopLeft, fill: Stroke::Fill::Inside), "#00ff00")
+    stage.frame
+    stage.at(0, 0).bg.should eq(0x336699_u32)
+  end
+
+  it "falls back to the plane's base colour outside the fill" do
+    stage = Engine.new(1, 1)
+    stage.compositor.cell_pixels(4, 8)
+    plane = stage.plane(1, 1)
+    plane.base(bg: "#336699")
+    plane.stroke(0, 0, Stroke.new(Stroke::Piece::Top, fill: Stroke::Fill::Inside), "#ff0000", "#ffffff")
+    stage.frame
+    stage.at(0, 0).bg.should eq(0x336699_u32)
+  end
+
   it "tints the whole tile under a translucent plane above it" do
     stage = Engine.new(2, 1)
     stage.compositor.cell_pixels(4, 8)

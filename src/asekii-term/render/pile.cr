@@ -506,6 +506,12 @@ module Asekii::Render
               weight = power
               above = field
               field = Accum.new
+              ground = source.outer.clear? ? base.bg : source.outer
+              level = ground.alpha / 255.0_f32 * power
+              if level > 0.0_f32
+                field.add(grounded(ground), level, @palette, @space)
+                break if field.locked?
+              end
               next
             end
             glyph = source.glyph

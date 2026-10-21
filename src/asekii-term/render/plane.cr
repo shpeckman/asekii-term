@@ -248,8 +248,9 @@ module Asekii::Render
       return unless inside?(x, y)
       sever(x, y)
       index = y * @cols + x
+      held = @cells.unsafe_fetch(index)
       @cells.unsafe_put(index, Cell.new(Strokes.intern(stroke), ink(fg),
-        @pile.merge(@cells.unsafe_fetch(index).bg, field(bg)), flags: Cell::STROKE))
+        @pile.merge(held.bg, field(bg)), flags: Cell::STROKE, line: held.outer))
       mark(x, y, x + 1, y + 1)
     end
 
