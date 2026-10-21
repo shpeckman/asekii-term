@@ -104,6 +104,7 @@ class Asekii::Terminal
     property clipboard = ClipboardProtocol::Auto
     property notifications = NotifyProtocol::Auto
     property multiplexer = Multiplexer::Auto
+    property clock : Clock = Clock::SYSTEM
     getter chords = {} of String => Array(Int32)
     getter sequences = {} of String => Array(Int32)
     getter shortcuts = {} of String => Event::Shortcut

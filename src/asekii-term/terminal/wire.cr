@@ -12,7 +12,6 @@ class Asekii::Terminal
   POLL       = 100.milliseconds
   SWEEP      = 64
   IDENT      = /\A[a-zA-Z0-9_\-+.]+\z/
-  STARTED    = Time.instant
 
   enum Query
     Shape
@@ -286,6 +285,6 @@ class Asekii::Terminal
   end
 
   private def clock : Time::Span
-    Time.instant - STARTED
+    @config.clock.now - @epoch
   end
 end

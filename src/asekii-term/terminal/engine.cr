@@ -53,9 +53,13 @@ class Asekii::Terminal
   @dragging = false
   @inside = false
   @dwelling = false
+  @tick = Channel(Nil).new
+  @wake : Proc(Nil) = -> { nil }
 
   private def setup_engine : Nil
     @node = @root
+    @wake = ->awaken
+    @config.clock.watch(@wake)
     @config.sequences.each do |name, codes|
       codes.reduce(@root) { |node, code| node.children.put_if_absent(code) { Node.new } }.action = name
     end
@@ -73,7 +77,9 @@ class Asekii::Terminal
         when raw = @raw.receive?
           break unless raw
           track(raw, clock)
-        when timeout(patience)
+        when @tick.receive
+          nil
+        when timeout(@config.clock.budget(patience))
           nil
         end
       else
@@ -81,7 +87,9 @@ class Asekii::Terminal
         when raw = @raw.receive?
           break unless raw
           track(raw, clock)
-        when timeout(patience)
+        when @tick.receive
+          nil
+        when timeout(@config.clock.budget(patience))
           nil
         end
       end
@@ -95,8 +103,15 @@ class Asekii::Terminal
     @backlog.each { |event| @events.send(event) }
   rescue Channel::ClosedError
   ensure
+    @config.clock.unwatch(@wake)
+    @tick.close
     @events.close
     @raw.close
+  end
+
+  private def awaken : Nil
+    @tick.send(nil)
+  rescue Channel::ClosedError
   end
 
   private def patience : Time::Span

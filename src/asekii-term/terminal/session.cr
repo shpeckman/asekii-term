@@ -50,6 +50,7 @@ class Asekii::Terminal
   @restored = Atomic(Bool).new(false)
   @features = Atomic(Int32).new(Feature::All.value)
   @medium = Atomic(Int32).new(-1)
+  @epoch : Time::Instant
 
   CONTEXT = Fiber::ExecutionContext::Concurrent.new("asekii.term")
 
@@ -64,6 +65,7 @@ class Asekii::Terminal
 
   def initialize(@config : Config = Config.new, @input : IO::FileDescriptor = STDIN, @io : IO::FileDescriptor = STDOUT)
     ident(@config.clipboard_id)
+    @epoch = @config.clock.now
     @events = Channel(Event::Input).new(@config.event_buffer)
     @output = Channel(Output).new(256)
     @raw = Channel(Event::Raw).new(256)
@@ -301,10 +303,10 @@ class Asekii::Terminal
 
   private def survey : Feature
     return Feature::All unless @config.detect
-    deadline = clock + @config.query_timeout
+    deadline = Time.instant + @config.query_timeout
     waiters = FEATURES.map { |mode| {mode, enqueue(Query::Mode, mode.probe, mode.key, true)} }
     waiters.reduce(Feature::None) do |found, (mode, waiter)|
-      state = await(waiter, {deadline - clock, Time::Span.zero}.max).as?(Int32) || 0
+      state = await(waiter, {deadline - Time.instant, Time::Span.zero}.max).as?(Int32) || 0
       state.in?(0, 4) ? found : found | mode.feature
     end
   end

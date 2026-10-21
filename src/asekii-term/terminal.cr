@@ -11,6 +11,7 @@ require "tty"
 
 require "termwidth"
 
+require "./common/clock"
 require "./common/unicode_placeholder"
 require "./common/color_syntax"
 require "./common/kitty_graphics"
