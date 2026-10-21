@@ -316,6 +316,11 @@ module Asekii::Render
     end
 
     @[AlwaysInline]
+    def outer : Paint
+      stroke? ? @line : @bg
+    end
+
+    @[AlwaysInline]
     def block? : Bool
       @span > 1_u8
     end
@@ -331,8 +336,8 @@ module Asekii::Render
 
     def lettered : Cell
       shape = Strokes[@glyph]
-      return Cell.new(shape.glyph.ord.to_u32, @bg, Paint::NONE, @attrs, line: @line, link: @link) if shape.blank?
-      Cell.new(shape.glyph.ord.to_u32, @fg, @bg, @attrs, line: @line, link: @link)
+      return Cell.new(shape.glyph.ord.to_u32, @bg, Paint::NONE, @attrs, link: @link) if shape.blank?
+      Cell.new(shape.glyph.ord.to_u32, @fg, @bg, @attrs, link: @link)
     end
 
     def blanked : Cell

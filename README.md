@@ -118,6 +118,11 @@ A stroke is described by what it connects — `arms`, `bends`, `node`, `fade`, `
 `Stroke.branch` returns the shape of any codepoint in kitty's and Ghostty's branch-drawing range
 (U+F5D0–U+F60D), drawn as tiles so they take the stroke width and colours like a border.
 
+A stroke's `bg` paints the quarters of its tile that `fill` covers. The rest of the tile shows the
+background the stroke was drawn over on its own plane (or the plane's base colour when that cell was
+empty), over whatever lies below. A border stroked onto a filled plane with `fill: Inside` therefore
+keeps the surrounding colour outside its line and its own colour inside.
+
 `Render::Bitmap` is RGBA (`0xRRGGBBAA`) with `fill`, `blend`, `line`, `disc` and `arc`. `Render::Theme`
 and `Render::Themes` map colour roles to palettes; `Render::TextLayout` wraps termwidth's line
 wrapping and character classification. On a terminal that takes palette-indexed pixels, set
