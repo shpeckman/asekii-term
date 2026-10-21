@@ -37,6 +37,7 @@ module Asekii::Render
     property landed : (-> Nil)?
     property? exact : Bool
     property? indexed : Bool
+    property? enabled : Bool
 
     def initialize
       @cell_width = 0
@@ -56,6 +57,7 @@ module Asekii::Render
       @landed = nil
       @exact = false
       @indexed = false
+      @enabled = true
     end
 
     def self.slot(paint : Paint) : UInt32?
@@ -71,7 +73,7 @@ module Asekii::Render
     end
 
     def ready? : Bool
-      @cell_width > 0 && @cell_height > 0
+      @enabled && @cell_width > 0 && @cell_height > 0
     end
 
     def size : Int32

@@ -339,7 +339,7 @@ class Asekii::Terminal
   end
 
   private def frame_control(head : String, id : UInt32, number : UInt32, x : Int32, y : Int32, base : Int32, edit : Int32, gap : Int32, replace : Bool, background : UInt32, quiet : Quiet) : String
-    merge(',', keys(',', {'a', 'f'}, {'i', id}, {'I', number}, {'q', quiet.value}, {'x', x}, {'y', y}, {'c', base}, {'r', edit}, {'z', gap}, {'X', replace}, {'Y', background}), head)
+    merge(',', keys(',', {'a', 'f'}, {'i', id}, {'I', number}, {'q', quiet.value}, {'x', x}, {'y', y}, {'c', base}, {'r', edit}, {'z', gap}, {'X', replace}, {'C', replace}, {'Y', background}), head)
   end
 
   private def placed(placement : Placement) : String
