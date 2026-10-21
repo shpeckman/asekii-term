@@ -130,6 +130,7 @@ module Asekii::Render
     property running : Proc(Bool) = -> { false }
     property querier : Proc(Proc(Survey?, Nil), Nil) = ->(done : Proc(Survey?, Nil)) { done.call(nil) }
     property ticker : Proc(Time::Span, Proc(Nil), Proc(Nil)) = ->(span : Time::Span, tick : Proc(Nil)) { -> { nil } }
+    property now : Proc(Time::Instant) = -> { Time.instant }
     property on_theme : Proc(String?, Nil) = ->(name : String?) { nil }
     property on_palette : Proc(Nil) = -> { nil }
 
@@ -388,11 +389,11 @@ module Asekii::Render
         return
       end
       origin = @palette.dup
-      started = Time.instant
+      started = now.call
       shades = @roles.map { |paint| Pile.rgb(paint, origin) }
       paints = @roles.dup
       @animation = ticker.call(STEP, -> {
-        amount = ((Time.instant - started) / duration).clamp(0.0, 1.0)
+        amount = ((now.call - started) / duration).clamp(0.0, 1.0)
         if amount >= 1.0
           halt
           show(goal, roles)
