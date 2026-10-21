@@ -71,6 +71,13 @@ notifications, `OSC 4` palette reads, `OSC 11` light-or-dark, Sixel and iTerm2 i
 terminal picks the fallback when the kitty one is missing. Set `config.detect = false` to assume every
 kitty protocol and mode.
 
+The gesture engine (holds, taps, multi-clicks, long presses, hover dwell, scroll coalescing, key
+sequences) times events with `config.clock`, an `Asekii::Clock` that defaults to
+`Asekii::Clock::SYSTEM`. A clock answers `now`, says how long a sleeper may wait for a deadline
+(`budget`), and calls the procs registered with `watch` when it jumps, so a test clock can freeze time
+and still wake the engine when it moves. Capability queries keep using real time. The render engine's
+theme transitions read time through `Themes#now`.
+
 `title=` sets the window title (`OSC 2`) and restores it on exit; `bell` rings; `progress` shows a
 fraction in the taskbar or tab (`OSC 9;4`) and `clear_progress` removes it. Inside tmux (`$TMUX`) or
 GNU screen (`$STY`) the terminal wraps the kitty-family sequences in the multiplexer's passthrough so
