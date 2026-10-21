@@ -198,6 +198,11 @@ module Asekii::Render
         @images = images
         invalidate if inline
       end
+      kitty = images.kitty?
+      unless kitty == @pile.stroke_images.enabled?
+        @pile.stroke_images.enabled = kitty
+        @pile.damage_all
+      end
       images
     end
 
