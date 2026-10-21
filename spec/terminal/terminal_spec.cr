@@ -1348,7 +1348,7 @@ describe Asekii::Terminal do
     it "transmits animation frames and keeps a=f on continuation chunks" do
       rig do |rig|
         rig.term.frame(Asekii::Terminal::Pixels.rgb(Bytes.new(3), 1, 1), id: 5, x: 1, y: 2, base: 3, edit: 4, gap: -1, replace: true, background: 4278190335, quiet: :all)
-        rig.expect("\e_Ga=f,i=5,q=2,x=1,y=2,c=3,r=4,z=-1,X=1,Y=4278190335,f=24,t=d,s=1,v=1;AAAA\e\\")
+        rig.expect("\e_Ga=f,i=5,q=2,x=1,y=2,c=3,r=4,z=-1,X=1,C=1,Y=4278190335,f=24,t=d,s=1,v=1;AAAA\e\\")
         ack = rig.ask(/\e_Ga=f,I=3.*?m=0;[^\e]*\e\\/m, apc("i=8,I=3;OK")) { rig.term.frame(Asekii::Terminal::Pixels.rgb(Bytes.new(3600), 40, 30), number: 3, gap: 40) }.not_nil!
         ack.image.should eq(8)
         rig.last.scan(/\e_G([^;]*);/).map(&.[1]).should eq(["a=f,I=3,z=40,f=24,t=d,s=40,v=30,m=1", "a=f,m=0"])
@@ -1477,7 +1477,7 @@ describe Asekii::Terminal do
     it "encodes graphics commands without sending them" do
       rig do |rig|
         rig.term.frame_code(Asekii::Terminal::Pixels.rgba(Bytes.new(4), 1, 1), id: 5, x: 2, edit: 1, replace: true)
-          .should eq("\e_Ga=f,i=5,q=2,x=2,r=1,X=1,f=32,t=d,s=1,v=1;AAAAAA==\e\\")
+          .should eq("\e_Ga=f,i=5,q=2,x=2,r=1,X=1,C=1,f=32,t=d,s=1,v=1;AAAAAA==\e\\")
         rig.term.image_code(Asekii::Terminal::Pixels.rgb(Bytes.new(3), 1, 1), id: 6, quiet: Asekii::Terminal::Quiet::Ok)
           .should eq("\e_Ga=t,i=6,q=1,f=24,t=d,s=1,v=1;AAAA\e\\")
         Asekii::Terminal.compose_code(1, 2, id: 5, width: 3, replace: true).should eq("\e_Ga=c,i=5,q=2,r=1,c=2,w=3,C=1\e\\")
