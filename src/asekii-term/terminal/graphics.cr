@@ -302,13 +302,21 @@ class Asekii::Terminal
   end
 
   def frame(pixels : Pixels, id : UInt32 = 0, number : UInt32 = 0, x : Int32 = 0, y : Int32 = 0, base : Int32 = 0, edit : Int32 = 0, gap : Int32 = 0, replace : Bool = false, background : UInt32 = 0, quiet : Quiet = Quiet::None, limit : Time::Span = @config.query_timeout) : Event::Ack?
-    head, source = load(localize(pixels))
-    draw(frame_control(head, id, number, x, y, base, edit, gap, replace, background, quiet), source, id, number, quiet, limit, "a=f")
+    ack = nil
+    frame_pieces(localize(pixels)) do |piece, dx, dy|
+      head, source = load(piece)
+      ack = draw(frame_control(head, id, number, x + dx, y + dy, base, edit, gap, replace, background, quiet), source, id, number, quiet, limit, "a=f")
+    end
+    ack
   end
 
   def frame_code(pixels : Pixels, id : UInt32 = 0, number : UInt32 = 0, x : Int32 = 0, y : Int32 = 0, base : Int32 = 0, edit : Int32 = 0, gap : Int32 = 0, replace : Bool = false, background : UInt32 = 0, quiet : Quiet = Quiet::All) : String
-    head, source = load(localize(pixels))
-    encode(frame_control(head, id, number, x, y, base, edit, gap, replace, background, quiet), source, quiet, "a=f")
+    String.build do |code|
+      frame_pieces(localize(pixels)) do |piece, dx, dy|
+        head, source = load(piece)
+        code << encode(frame_control(head, id, number, x + dx, y + dy, base, edit, gap, replace, background, quiet), source, quiet, "a=f")
+      end
+    end
   end
 
   def animate(id : UInt32 = 0, number : UInt32 = 0, state : Playback? = nil, current : Int32 = 0, loops : Int32 = 0, target : Int32 = 0, gap : Int32 = 0, quiet : Quiet = Quiet::None) : Nil
@@ -374,12 +382,65 @@ class Asekii::Terminal
     if pixels.compress && pixels.medium.direct?
       raw = data.is_a?(IO) ? data.getb_to_end : data
       size = raw.size if pixels.format.png?
-      packed = IO::Memory.new
-      Compress::Zlib::Writer.open(packed, &.write(raw))
-      data = packed.to_slice
+      data = pack(raw)
     end
     control = keys(',', {'f', pixels.format.value}, {'t', MEDIA[pixels.medium]}, {'s', pixels.width}, {'v', pixels.height}, {'S', size}, {'O', pixels.offset}, {'o', pixels.compress ? 'z' : 0})
     {control, data}
+  end
+
+  FRAME_FIT = 3059
+
+  private def pack(data : Bytes) : Bytes
+    packed = IO::Memory.new
+    Compress::Zlib::Writer.open(packed, &.write(data))
+    packed.to_slice
+  end
+
+  private def frame_pieces(pixels : Pixels, & : Pixels, Int32, Int32 ->) : Nil
+    data = pixels.data
+    return yield pixels, 0, 0 unless data.is_a?(Bytes)
+    depth = pixels.format.rgb? ? 3 : 4
+    splittable = pixels.medium.direct? &&
+                 (pixels.format.rgb? || pixels.format.rgba?) &&
+                 pixels.size == 0 && pixels.offset == 0 &&
+                 pixels.width >= 1 && pixels.height >= 1 &&
+                 data.size == pixels.width * pixels.height * depth
+    return yield pixels, 0, 0 unless splittable
+    fits = pixels.compress ? data.size <= FRAME_FIT : data.size <= RAW_CHUNK
+    return yield pixels, 0, 0 if fits
+    frame_split(pixels, data, 0, 0).each { |piece, dx, dy| yield piece, dx, dy }
+  end
+
+  private def frame_split(pixels : Pixels, data : Bytes, dx : Int32, dy : Int32) : Array({Pixels, Int32, Int32})
+    fits = pixels.compress ? pack(data).size <= RAW_CHUNK : data.size <= RAW_CHUNK
+    return [{pixels, dx, dy}] if fits
+    depth = pixels.format.rgb? ? 3 : 4
+    width = pixels.width
+    height = pixels.height
+    if height >= 2 && (width < 2 || height >= width)
+      cut = height // 2
+      row = width * depth
+      head = data[0, cut * row]
+      tail = data[cut * row..]
+      frame_split(pixels.copy_with(data: head, height: cut), head, dx, dy) +
+        frame_split(pixels.copy_with(data: tail, height: height - cut), tail, dx, dy + cut)
+    elsif width >= 2
+      cut = width // 2
+      row = width * depth
+      span = cut * depth
+      left = IO::Memory.new(span * height)
+      right = IO::Memory.new((row - span) * height)
+      height.times do |line|
+        left.write(data[line * row, span])
+        right.write(data[line * row + span, row - span])
+      end
+      head = left.to_slice
+      tail = right.to_slice
+      frame_split(pixels.copy_with(data: head, width: cut), head, dx, dy) +
+        frame_split(pixels.copy_with(data: tail, width: width - cut), tail, dx + cut, dy)
+    else
+      [{pixels, dx, dy}]
+    end
   end
 
   private def draw(control : String, source : Bytes | IO, id : UInt32, number : UInt32, quiet : Quiet, limit : Time::Span, action : String = "", probe : Bool = false) : Event::Ack?
