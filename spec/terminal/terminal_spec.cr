@@ -1349,9 +1349,54 @@ describe Asekii::Terminal do
       rig do |rig|
         rig.term.frame(Asekii::Terminal::Pixels.rgb(Bytes.new(3), 1, 1), id: 5, x: 1, y: 2, base: 3, edit: 4, gap: -1, replace: true, background: 4278190335, quiet: :all)
         rig.expect("\e_Ga=f,i=5,q=2,x=1,y=2,c=3,r=4,z=-1,X=1,C=1,Y=4278190335,f=24,t=d,s=1,v=1;AAAA\e\\")
-        ack = rig.ask(/\e_Ga=f,I=3.*?m=0;[^\e]*\e\\/m, apc("i=8,I=3;OK")) { rig.term.frame(Asekii::Terminal::Pixels.rgb(Bytes.new(3600), 40, 30), number: 3, gap: 40) }.not_nil!
+        ack = rig.ask(/\e_Ga=f,I=3.*?m=0;[^\e]*\e\\/m, apc("i=8,I=3;OK")) { rig.term.frame(Asekii::Terminal::Pixels.rgb(IO::Memory.new(Bytes.new(3600)), 40, 30), number: 3, gap: 40) }.not_nil!
         ack.image.should eq(8)
         rig.last.scan(/\e_G([^;]*);/).map(&.[1]).should eq(["a=f,I=3,z=40,f=24,t=d,s=40,v=30,m=1", "a=f,m=0"])
+      end
+    end
+
+    it "splits oversized frame edits into single-chunk pieces" do
+      rig do |rig|
+        noise = Random.new(7)
+        data = Bytes.new(40 * 30 * 3) { noise.rand(256).to_u8 }
+        code = rig.term.frame_code(Asekii::Terminal::Pixels.rgb(data, 40, 30), id: 5, x: 3, y: 2, edit: 1, replace: true)
+        parts = code.scan(/\e_G([^;]*);([^\e]*)\e\\/)
+        parts.size.should eq(2)
+        parts.map(&.[1]).should eq([
+          "a=f,i=5,q=2,x=3,y=2,r=1,X=1,C=1,f=24,t=d,s=20,v=30",
+          "a=f,i=5,q=2,x=23,y=2,r=1,X=1,C=1,f=24,t=d,s=20,v=30",
+        ])
+        left, right = parts.map { |part| Base64.decode(part[2]) }
+        rebuilt = IO::Memory.new(data.size)
+        30.times { |row| rebuilt.write(left[row * 60, 60]); rebuilt.write(right[row * 60, 60]) }
+        rebuilt.to_slice.should eq(data)
+      end
+    end
+
+    it "splits compressed frame edits into single-chunk pieces" do
+      rig do |rig|
+        noise = Random.new(11)
+        data = Bytes.new(16 * 300 * 4) { noise.rand(256).to_u8 }
+        code = rig.term.frame_code(Asekii::Terminal::Pixels.rgba(data, 16, 300, compress: true), id: 6, edit: 1)
+        parts = code.scan(/\e_G([^;]*);([^\e]*)\e\\/)
+        parts.size.should be > 1
+        whole = IO::Memory.new(data.size)
+        tops = [] of Int32
+        parts.each do |part|
+          control = part[1]
+          control.should start_with("a=f,i=6,q=2,")
+          control.should contain("r=1,f=32,t=d,s=16,")
+          control.should contain("o=z")
+          control.should_not contain("m=")
+          packed = Base64.decode(part[2])
+          packed.size.should be <= Asekii::Terminal::RAW_CHUNK
+          tops << (control[/\by=(\d+)/, 1]?.try(&.to_i) || 0)
+          Compress::Zlib::Reader.open(IO::Memory.new(packed)) { |reader| IO.copy(reader, whole) }
+        end
+        whole.to_slice.should eq(data)
+        rows = parts.map { |part| part[1][/\bv=(\d+)/, 1].to_i }
+        rows.sum.should eq(300)
+        tops.should eq(rows.reduce([0]) { |acc, n| acc << acc.last + n }[0...-1])
       end
     end
 
