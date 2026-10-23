@@ -209,6 +209,74 @@ describe Asekii::Render::Stroke do
     Stroke.corner(Stroke::Arm::North | Stroke::Arm::West).should eq(Stroke::Corner::NorthWest)
     Stroke.corner(Stroke::VERTICAL).should eq(Stroke::Corner::None)
   end
+
+  it "breaks a dashed line into marks measured from the centre" do
+    mask = Stroke.new(arms: Stroke::HORIZONTAL, width: 2, line: Stroke::Line::Dashed).mask(24, 16)
+    solid = Stroke.new(arms: Stroke::HORIZONTAL, width: 2).mask(24, 16)
+    coverage(mask, 24, 11, 7)[0].should eq(255_u8)
+    coverage(mask, 24, 6, 7)[0].should eq(255_u8)
+    coverage(mask, 24, 0, 7)[0].should eq(255_u8)
+    coverage(mask, 24, 23, 7)[0].should eq(255_u8)
+    coverage(mask, 24, 2, 7)[0].should eq(0_u8)
+    coverage(mask, 24, 5, 7)[0].should eq(0_u8)
+    coverage(mask, 24, 18, 7)[0].should eq(0_u8)
+    coverage(solid, 24, 2, 7)[0].should eq(255_u8)
+    coverage(mask, 24, 11, 6)[0].should eq(0_u8)
+  end
+
+  it "dots a dotted line with shorter marks" do
+    mask = Stroke.new(arms: Stroke::VERTICAL, width: 2, line: Stroke::Line::Dotted).mask(24, 16)
+    coverage(mask, 24, 11, 8)[0].should eq(255_u8)
+    coverage(mask, 24, 11, 6)[0].should eq(255_u8)
+    coverage(mask, 24, 11, 1)[0].should eq(255_u8)
+    coverage(mask, 24, 11, 5)[0].should eq(0_u8)
+    coverage(mask, 24, 11, 3)[0].should eq(0_u8)
+  end
+
+  it "letters dashed and dotted lines with dash glyphs and junctions with light ones" do
+    Stroke.new(arms: Stroke::HORIZONTAL, line: Stroke::Line::Dashed).glyph.should eq('┄')
+    Stroke.new(arms: Stroke::VERTICAL, line: Stroke::Line::Dashed).glyph.should eq('┆')
+    Stroke.new(arms: Stroke::HORIZONTAL, line: Stroke::Line::Dotted).glyph.should eq('┈')
+    Stroke.new(arms: Stroke::VERTICAL, line: Stroke::Line::Dotted).glyph.should eq('┊')
+    Stroke.new(arms: Stroke::VERTICAL | Stroke::Arm::East, line: Stroke::Line::Dashed).glyph.should eq('├')
+  end
+
+  it "draws square and diamond nodes filled or as rings" do
+    square = Stroke.new(node: Stroke::Node::SquareFilled, width: 2).mask(8, 16)
+    coverage(square, 8, 4, 8)[0].should eq(255_u8)
+    coverage(square, 8, 0, 4)[0].should be > 0_u8
+    coverage(square, 8, 0, 3)[0].should eq(0_u8)
+    disc = Stroke.new(node: Stroke::Node::Filled, width: 2).mask(8, 16)
+    coverage(disc, 8, 0, 4)[0].should eq(0_u8)
+    hollow = Stroke.new(node: Stroke::Node::SquareHollow, width: 2).mask(8, 16)
+    coverage(hollow, 8, 4, 8)[0].should eq(0_u8)
+    coverage(hollow, 8, 1, 8)[0].should eq(255_u8)
+    diamond = Stroke.new(node: Stroke::Node::DiamondFilled, width: 2).mask(8, 16)
+    coverage(diamond, 8, 4, 8)[0].should eq(255_u8)
+    coverage(diamond, 8, 1, 8)[0].should eq(255_u8)
+    coverage(diamond, 8, 0, 8)[0].should be < 255_u8
+    coverage(diamond, 8, 0, 4)[0].should eq(0_u8)
+    ring = Stroke.new(node: Stroke::Node::DiamondHollow, width: 2).mask(8, 16)
+    coverage(ring, 8, 4, 8)[0].should eq(0_u8)
+    coverage(ring, 8, 1, 8)[0].should eq(255_u8)
+  end
+
+  it "letters node shapes with their nearest glyph" do
+    Stroke.new(node: Stroke::Node::SquareFilled).glyph.should eq('■')
+    Stroke.new(node: Stroke::Node::SquareHollow).glyph.should eq('□')
+    Stroke.new(node: Stroke::Node::DiamondFilled).glyph.should eq('◆')
+    Stroke.new(node: Stroke::Node::DiamondHollow).glyph.should eq('◇')
+  end
+
+  it "rounds the end of a capped arm while a butt cap stays flush" do
+    butt = Stroke.new(arms: Stroke::Arm::East, width: 2, caps: Stroke::Arm::East).mask(8, 16)
+    coverage(butt, 8, 7, 7)[0].should eq(255_u8)
+    round = Stroke.new(arms: Stroke::Arm::East, width: 2, caps: Stroke::Arm::East, cap: Stroke::Cap::Round).mask(8, 16)
+    coverage(round, 8, 5, 7)[0].should eq(255_u8)
+    coverage(round, 8, 7, 7)[0].should be > 0_u8
+    coverage(round, 8, 7, 7)[0].should be < 255_u8
+    coverage(round, 8, 7, 5)[0].should eq(0_u8)
+  end
 end
 
 describe Asekii::Render::StrokeImages do
