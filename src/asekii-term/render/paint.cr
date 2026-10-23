@@ -45,6 +45,7 @@ module Asekii::Render
 
     @@slots = {} of String => Int32
     @@names = [] of String
+    @@lock = Sync::Mutex.new
 
     Core.each do |role|
       name = role.to_s.underscore
@@ -54,22 +55,24 @@ module Asekii::Render
 
     def slot(name : String | Symbol) : Int32
       key = name.to_s
-      @@slots[key] ||= begin
-        @@names << key
-        @@names.size - 1
+      @@lock.synchronize do
+        @@slots[key] ||= begin
+          @@names << key
+          @@names.size - 1
+        end
       end
     end
 
     def slot?(name : String | Symbol) : Int32?
-      @@slots[name.to_s]?
+      @@lock.synchronize { @@slots[name.to_s]? }
     end
 
     def name(slot : Int32) : String
-      @@names[slot]
+      @@lock.synchronize { @@names[slot] }
     end
 
     def count : Int32
-      @@names.size
+      @@lock.synchronize { @@names.size }
     end
   end
 

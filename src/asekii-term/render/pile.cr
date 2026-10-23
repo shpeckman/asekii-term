@@ -154,6 +154,11 @@ module Asekii::Render
     def merge(under : Paint, over : Paint) : Paint
       return under if over.clear?
       return over if over.alpha == 255_u8 || under.clear?
+      unless under.kind.rgb? && over.kind.rgb?
+        top = over.alpha.to_f64 / 255.0
+        rest = under.alpha.to_f64 / 255.0 * (1.0 - top)
+        return Paint.spec(Layered.new(under, over)).fade(top + rest)
+      end
       if merger = @merger
         merger.call(under, over)
       else

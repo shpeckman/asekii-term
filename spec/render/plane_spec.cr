@@ -88,7 +88,11 @@ describe Asekii::Render::Plane do
     plane[3, 0].bg.alpha.should be_close(192, 1)
     stage.plane(1, 1).fill(bg: 4)
     stage.planes_top.put(0, 0, "r", bg: {:accent, 0.5})
-    stage.planes_top[0, 0].bg.kind.should eq(Asekii::Render::Paint::Kind::RGB)
+    stage.planes_top[0, 0].bg.kind.should eq(Asekii::Render::Paint::Kind::Spec)
+    stage.compose
+    tile = stage.at(0, 0)
+    tile.bg_kind.should eq(Asekii::Render::Tile::Kind::RGB)
+    tile.bg.should eq(0x0000ee_u32)
   end
 
   it "fills, erases and keeps the base cell" do

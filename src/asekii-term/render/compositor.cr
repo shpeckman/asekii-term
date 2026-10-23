@@ -50,7 +50,7 @@ module Asekii::Render
     getter blend : BlendSpace
     getter images : ImageProtocol
 
-    property themes : Themes
+    getter themes : Themes
 
     @pen : Tile
 
@@ -64,6 +64,9 @@ module Asekii::Render
       @painters = [] of Compositor -> Nil
       @outbox = [] of String
       @themes = Themes.new
+      @wired_palette = @themes.on_palette
+      previous = @themes.on_palette
+      @themes.on_palette = -> { previous.call; @pile.damage_all }
       @blend = BlendSpace::Linear
       @cursor_shape = nil
       @cursor_blink = true
@@ -78,6 +81,16 @@ module Asekii::Render
       @caret_row = -1
       @caret_code = 0
       @pile.merger = ->(under : Paint, over : Paint) { fuse(under, over) }
+    end
+
+    def themes=(themes : Themes) : Themes
+      return themes if themes.same?(@themes)
+      @themes.on_palette = @wired_palette
+      previous = themes.on_palette
+      @wired_palette = previous
+      @themes = themes
+      themes.on_palette = -> { previous.call; @pile.damage_all }
+      themes
     end
 
     def enter(target : Bytewire) : Nil

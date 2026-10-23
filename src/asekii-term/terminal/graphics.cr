@@ -103,26 +103,49 @@ class Asekii::Terminal
     end
 
     def raster : Raster?
-      source = data
-      bytes = case source
-              in IO then source.getb_to_end
-              in Bytes
-                if medium.direct?
-                  source
-                else
-                  path = String.new(source)
-                  path = "/dev/shm#{path}" if medium.shared_memory?
-                  File.read(path).to_slice
-                end
-              end
-      bytes = bytes[offset.clamp(0, bytes.size), size.clamp(0, bytes.size - offset.clamp(0, bytes.size))] if !medium.direct? && size > 0
       case format
-      when .rgb?  then Raster.rgb(bytes, width, height)
-      when .rgba? then Raster.rgba(bytes, width, height)
-      when .png?  then Raster.png(bytes)
+      when .png?
+        Raster.png(read_source(nil))
+      when .rgb?, .rgba?
+        depth = format.rgb? ? 3 : 4
+        needed = width * height * depth
+        return if needed <= 0
+        if !medium.direct? && size > 0
+          whole = read_source(nil)
+          bytes = whole[offset.clamp(0, whole.size), size.clamp(0, whole.size - offset.clamp(0, whole.size))]
+        else
+          bytes = read_source(needed)
+        end
+        format.rgb? ? Raster.rgb(bytes, width, height) : Raster.rgba(bytes, width, height)
       end
     rescue IO::Error | File::Error
       nil
+    end
+
+    private def read_source(limit : Int32?) : Bytes
+      source = data
+      case source
+      in IO
+        limit ? read_limited(source, limit) : source.getb_to_end
+      in Bytes
+        return source if medium.direct?
+        path = String.new(source)
+        path = "/dev/shm#{path}" if medium.shared_memory?
+        File.open(path) do |file|
+          limit ? read_limited(file, limit) : file.getb_to_end
+        end
+      end
+    end
+
+    private def read_limited(io : IO, limit : Int32) : Bytes
+      buffer = Bytes.new(limit)
+      filled = 0
+      while filled < limit
+        count = io.read(buffer[filled..])
+        break if count == 0
+        filled += count
+      end
+      buffer[0, filled]
     end
 
     def self.shared(data : Bytes, format : Format = Format::PNG, width : Int32 = 0, height : Int32 = 0) : Pixels
