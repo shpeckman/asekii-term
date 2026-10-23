@@ -39,6 +39,15 @@ module Asekii::Render
       None
       Filled
       Hollow
+      SquareFilled
+      SquareHollow
+      DiamondFilled
+      DiamondHollow
+    end
+
+    enum Cap : UInt8
+      Butt
+      Round
     end
 
     enum Fade : UInt8
@@ -53,6 +62,8 @@ module Asekii::Render
       Light
       Heavy
       Double
+      Dashed
+      Dotted
       None
     end
 
@@ -106,6 +117,11 @@ module Asekii::Render
     CENTRE     = 128_u8
     SAMPLES    =      4
 
+    DASH_MARK = 3.0_f32
+    DASH_GAP  = 2.0_f32
+    DOT_MARK  = 1.0_f32
+    DOT_GAP   = 2.0_f32
+
     PIECES = StaticArray[
       Shape.new(HORIZONTAL, Corner::None, Corner::SouthWest | Corner::SouthEast, Mirror::None),
       Shape.new(HORIZONTAL, Corner::None, Corner::NorthWest | Corner::NorthEast, Mirror::Y),
@@ -123,9 +139,14 @@ module Asekii::Render
 
     DOUBLE = StaticArray[' ', '║', '═', '╚', '║', '║', '╔', '╠', '═', '╝', '═', '╩', '╗', '╣', '╦', '╬']
 
+    DASHED = StaticArray[' ', '╵', '╶', '└', '╷', '┆', '┌', '├', '╴', '┘', '┄', '┴', '┐', '┤', '┬', '┼']
+
+    DOTTED = StaticArray[' ', '╵', '╶', '└', '╷', '┊', '┌', '├', '╴', '┘', '┈', '┴', '┐', '┤', '┬', '┼']
+
     QUADS = StaticArray[' ', '▘', '▝', '▀', '▖', '▌', '▞', '▛', '▗', '▚', '▐', '▜', '▄', '▙', '▟', '█']
 
-    GLYPHS = {Line::Light => LINES, Line::Heavy => HEAVY, Line::Double => DOUBLE}
+    GLYPHS = {Line::Light => LINES, Line::Heavy => HEAVY, Line::Double => DOUBLE,
+              Line::Dashed => DASHED, Line::Dotted => DOTTED}
 
     CURVES = {
       Corner::NorthWest => '╯',
@@ -195,6 +216,8 @@ module Asekii::Render
     getter bends : Corner
     getter node : Node
     getter fade : Fade
+    getter caps : Arm
+    getter cap : Cap
     getter fill : Corner
     getter mirror : Mirror
     getter tones : Tones
@@ -204,7 +227,8 @@ module Asekii::Render
     getter line : Line
 
     def initialize(*, @arms : Arm = Arm::None, @bends : Corner = Corner::None, @node : Node = Node::None,
-                   @fade : Fade = Fade::None, @fill : Corner = Corner::All, width : Int = 1,
+                   @fade : Fade = Fade::None, @caps : Arm = Arm::None, @cap : Cap = Cap::Butt,
+                   @fill : Corner = Corner::All, width : Int = 1,
                    position : Float64 = 0.5, x : Float64 = position, y : Float64 = position,
                    @mirror : Mirror = Mirror::None, @tones : Tones = Tones::NONE, @line : Line = Line::Light)
       @width = width.clamp(1, 255).to_u8
@@ -284,8 +308,12 @@ module Asekii::Render
     def glyph : Char
       return QUADS.unsafe_fetch(@fill.value) if blank?
       case @node
-      in Node::Filled then return '●'
-      in Node::Hollow then return '○'
+      in Node::Filled        then return '●'
+      in Node::Hollow        then return '○'
+      in Node::SquareFilled  then return '■'
+      in Node::SquareHollow  then return '□'
+      in Node::DiamondFilled then return '◆'
+      in Node::DiamondHollow then return '◇'
       in Node::None
       end
       if @arms.none? && @line.light?
@@ -294,7 +322,7 @@ module Asekii::Render
       GLYPHS[@line].unsafe_fetch(reach.value)
     end
 
-    def_equals_and_hash arms, bends, node, fade, fill, mirror, tones, width, x, y, line
+    def_equals_and_hash arms, bends, node, fade, caps, cap, fill, mirror, tones, width, x, y, line
 
     def mask(width : Int32, height : Int32) : Bytes
       data = Bytes.new(width * height * 2)
@@ -345,6 +373,7 @@ module Asekii::Render
       flip_x = @mirror.x?
       flip_y = @mirror.y?
       arms = Stroke.turn(@line.double? ? reach : @arms, flip_x, flip_y)
+      caps = Stroke.turn(@caps, flip_x, flip_y)
       arcs = @line.double? ? [] of Arc : arcs(Stroke.turn(@bends, flip_x, flip_y), width, height, cx, cy)
       radius = Math.min(Math.min(cx, cy), Math.min(width - cx, height - cy))
       fading = !@fade.none?
@@ -361,7 +390,7 @@ module Asekii::Render
             SAMPLES.times do |sx|
               x = px + (sx + 0.5_f32) * step
               u = flip_x ? width - x : x
-              on, region = probe(u, v, width, height, cx, cy, half, thick, gap, radius, arms, arcs)
+              on, region = probe(u, v, width, height, cx, cy, half, thick, gap, radius, arms, caps, arcs)
               if on
                 hits += 1
                 shade += fade(x, y, width, height) if fading
@@ -428,7 +457,7 @@ module Asekii::Render
 
     private def probe(u : Float32, v : Float32, width : Int32, height : Int32, cx : Float32, cy : Float32,
                       half : Float32, thick : Float32, gap : Float32, radius : Float32, arms : Arm,
-                      arcs : Array(Arc)) : Tuple(Bool, Corner)
+                      caps : Arm, arcs : Array(Arc)) : Tuple(Bool, Corner)
       region = if v >= cy
                  u >= cx ? Corner::SouthEast : Corner::SouthWest
                else
@@ -439,10 +468,12 @@ module Asekii::Render
         on = rail(v, cy, u, cx, half, gap, arms.east?, arms.west?, arms.north?, arms.south?) ||
              rail(u, cx, v, cy, half, gap, arms.south?, arms.north?, arms.west?, arms.east?)
       elsif !arms.none?
-        across = (v - cy).abs <= half
-        along = (u - cx).abs <= half
-        on = (arms.east? && u >= cx - half && across) || (arms.west? && u <= cx + half && across) ||
-             (arms.south? && v >= cy - half && along) || (arms.north? && v <= cy + half && along)
+        across = (v - cy).abs
+        along = (u - cx).abs
+        on = (arms.east? && arm(u - cx, across, width - cx, half, thick, caps.east?)) ||
+             (arms.west? && arm(cx - u, across, cx, half, thick, caps.west?)) ||
+             (arms.south? && arm(v - cy, along, height - cy, half, thick, caps.south?)) ||
+             (arms.north? && arm(cy - v, along, cy, half, thick, caps.north?))
       end
       arcs.each do |arc|
         a = arc.flip_x ? width - u : u
@@ -463,12 +494,46 @@ module Asekii::Render
         end
       end
       unless @node.none?
-        reach = Math.sqrt((u - cx) * (u - cx) + (v - cy) * (v - cy))
+        du = (u - cx).abs
+        dv = (v - cy).abs
+        reach = case @node
+                when .square_filled?, .square_hollow?   then Math.max(du, dv)
+                when .diamond_filled?, .diamond_hollow? then du + dv
+                else                                         Math.sqrt(du * du + dv * dv)
+                end
         inner = radius - thick
-        on = false if @node.hollow? && reach < inner
-        on ||= reach <= radius && (@node.filled? || reach >= inner)
+        hollow = hollow_node?
+        on = false if hollow && reach < inner
+        on ||= reach <= radius && (!hollow || reach >= inner)
       end
       {on && !@line.none?, region}
+    end
+
+    private def arm(dist : Float32, across : Float32, extent : Float32, half : Float32, thick : Float32,
+                    capped : Bool) : Bool
+      return false if dist < -half
+      body = extent
+      if capped && @cap.round?
+        body = extent - half
+        return true if dist >= body && (dist - body) * (dist - body) + across * across <= half * half
+      end
+      across <= half && dist <= body && dashed(dist, thick)
+    end
+
+    @[AlwaysInline]
+    private def dashed(dist : Float32, thick : Float32) : Bool
+      unit = case @line
+             in .dashed?                           then {DASH_MARK, DASH_GAP}
+             in .dotted?                           then {DOT_MARK, DOT_GAP}
+             in .light?, .heavy?, .double?, .none? then return true
+             end
+      return true if dist <= 0.0_f32
+      period = (unit[0] + unit[1]) * thick
+      dist % period < unit[0] * thick
+    end
+
+    private def hollow_node? : Bool
+      @node.hollow? || @node.square_hollow? || @node.diamond_hollow?
     end
 
     @[AlwaysInline]

@@ -115,6 +115,10 @@ plane.stroke(0, 0, Asekii::Render::Stroke.new(Asekii::Render::Stroke::Piece::Top
 
 A stroke is described by what it connects — `arms`, `bends`, `node`, `fade`, `fill`, `width`,
 `position` and `mirror` — so the same tile pipeline draws border pieces, junctions and graph lanes.
+Its `line` is `Light`, `Heavy`, `Double`, `Dashed` or `Dotted`; dashes and dots are measured from
+the cell centre so the pattern stays continuous from tile to tile. A `node` is a disc, square or
+diamond, filled or hollow, and an arm named in `caps` ends inside its tile — flush with `cap: Butt`,
+rounded with `cap: Round`.
 `Stroke.branch` returns the shape of any codepoint in kitty's and Ghostty's branch-drawing range
 (U+F5D0–U+F60D), drawn as tiles so they take the stroke width and colours like a border.
 
