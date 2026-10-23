@@ -70,8 +70,12 @@ module Asekii
         length = IO::ByteFormat::BigEndian.decode(UInt32, source[offset, 4]).to_i
         name = String.new(source[offset + 4, 4])
         start = offset + 8
-        return if length < 0 || start + length > source.size
+        return if length < 0 || start + length > source.size || start + length + 4 > source.size
         body = source[start, length]
+        stored = IO::ByteFormat::BigEndian.decode(UInt32, source[start + length, 4])
+        crc = Digest::CRC32.update(name.to_slice, Digest::CRC32.initial)
+        crc = Digest::CRC32.update(body, crc) unless body.empty?
+        return unless stored == crc
         case name
         when "IHDR"
           return if length < 13

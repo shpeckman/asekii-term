@@ -174,7 +174,35 @@ module Asekii::Render
     end
   end
 
-  alias RoleSpec = Paint | Blend | Adjust | Contrast
+  struct Layered
+    getter under : Paint
+    getter over : Paint
+
+    def initialize(@under : Paint, @over : Paint)
+    end
+
+    def_equals_and_hash under, over
+
+    def resolve(themes : Themes, theme : Theme?, palette : Palette, depth : Int32) : Paint
+      below = ground(themes, theme, palette, depth, @under)
+      above = ground(themes, theme, palette, depth, @over)
+      Pile.fuse(below, above, palette, themes.space)
+    end
+
+    private def ground(themes : Themes, theme : Theme?, palette : Palette, depth : Int32, paint : Paint) : Paint
+      if paint.role?
+        found = themes.resolve_paint(paint, theme, palette, depth)
+        Paint.new(found.kind, found.value, paint.alpha)
+      elsif paint.spec?
+        found = themes.resolve_spec(Specs[paint.value], palette, depth)
+        Paint.new(found.kind, found.value, paint.alpha)
+      else
+        paint
+      end
+    end
+  end
+
+  alias RoleSpec = Paint | Blend | Adjust | Contrast | Layered
 
   module Specs
     extend self
