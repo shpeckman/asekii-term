@@ -46,7 +46,7 @@ a reference back is `Terminal::Query`.
 
 ```
 shard.yml                                      bytewire, tty, termwidth
-makefile                                       shards, spec, layers, run
+makefile                                       shards, spec, layers, run, bench
 src/asekii-term.cr                             both systems
 src/asekii-term/terminal.cr                    entry: opens Asekii::Event and Asekii::Terminal, then the parts
 src/asekii-term/terminal/                      the Terminal class split by concern (config, wire, session, events, parser, engine, color, clipboard, graphics, notify, dnd, identity, passthrough, indicators)
@@ -60,6 +60,10 @@ spec/terminal/terminal_spec.cr                 the protocol suite; drives Termin
 spec/terminal/run.sh                           the protocol matrix, before a release
 spec/render/                                   the engine suite; Engine drives it with a Bytewire, no app
 spec/palette16.cr                              the 16-colour reference palettes the render specs use
+bench/run.cr                                   the benchmark entry; requires the three suites below
+bench/render_bench.cr                          plane, compositor, text layout, colour space, palette, stroke
+bench/terminal_bench.cr                        colour grammar, shortcuts, kitty command builders
+bench/raster_bench.cr                          PNG, scaling, Sixel
 ```
 
 `make` prunes `lib/*` down to `shard.yml` and `src`, so the dependencies' own specs and AGENTS.md are
@@ -72,6 +76,7 @@ make shards    # install and prune dependencies
 make spec      # the terminal and render suites (spec/terminal spec/render)
 make layers    # type-check terminal.cr and render.cr each on its own
 make run       # the protocol flakiness matrix (spec/terminal/run.sh)
+make bench     # the benchmark suite (crystal run --release bench/run.cr)
 ```
 
 `make layers` is the boundary check for this shard: each layer compiles without the other, which is
