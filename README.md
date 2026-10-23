@@ -127,6 +127,11 @@ background the stroke was drawn over on its own plane (or the plane's base colou
 empty), over whatever lies below. A border stroked onto a filled plane with `fill: Inside` therefore
 keeps the surrounding colour outside its line and its own colour inside.
 
+`plane.picture(raster, x, y, columns, rows)` draws decoded image data through the compositor. It
+uses the inline image protocols, so it only shows when `compositor.images` is `ImageProtocol::Sixel`
+or `ImageProtocol::Iterm`. With `ImageProtocol::Kitty` (the default) `picture` draws nothing — upload
+the pixels through `Asekii::Terminal` and place them with `plane.sprite(image_id, ...)` instead.
+
 `Render::Bitmap` is RGBA (`0xRRGGBBAA`) with `fill`, `blend`, `line`, `disc` and `arc`. `Render::Theme`
 and `Render::Themes` map colour roles to palettes; `Render::TextLayout` wraps termwidth's line
 wrapping and character classification. On a terminal that takes palette-indexed pixels, set
