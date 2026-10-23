@@ -175,6 +175,7 @@ make shards    # install and prune dependencies
 make spec      # the terminal and render suites
 make layers    # type-check each layer on its own
 make run       # the protocol flakiness matrix, before a release
+make bench     # the benchmark suite
 ```
 
 ## License

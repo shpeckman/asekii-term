@@ -1,5 +1,5 @@
 # makefile
-.PHONY: all shards clean spec run layers
+.PHONY: all shards clean spec run layers bench
 
 LAYERS = terminal render
 SPECS  = spec/terminal spec/render
@@ -29,6 +29,9 @@ layers: shard.lock  ## Type-check each layer on its own
 
 run: shard.lock     ## Run the terminal/render flakiness harness
 	spec/terminal/run.sh
+
+bench: shard.lock   ## Run the benchmark suite
+	crystal run --release bench/run.cr
 
 help:               ## Show this help text
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-18s %s\n", $$1, $$2}'
