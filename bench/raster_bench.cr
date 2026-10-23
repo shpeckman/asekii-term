@@ -20,20 +20,23 @@ module Bench::Raster
     Asekii::Raster.rgba(data, width, height).not_nil!
   end
 
-  def run : Nil
+  def run : Int64
     raster = build
     png = raster.to_png
+    sink = 0_i64
 
     puts "\nraster"
 
     Benchmark.ips(1.second, 200.milliseconds, false) do |job|
-      job.report("Raster.to_png 64x64") { raster.to_png }
-      job.report("Raster.png decode 64x64") { Asekii::Raster.png(png) }
-      job.report("Raster.scale 64->32") { raster.scale(32, 32) }
-      job.report("Raster.to_sixel 64x64") { raster.to_sixel }
-      job.report("Raster.rgba wrap") { Asekii::Raster.rgba(raster.data, 64, 64) }
+      job.report("Raster.to_png 64x64") { sink += raster.to_png.size }
+      job.report("Raster.png decode 64x64") { sink += Asekii::Raster.png(png).try(&.width) || 0 }
+      job.report("Raster.scale 64->32") { sink += raster.scale(32, 32).width }
+      job.report("Raster.to_sixel 64x64") { sink += raster.to_sixel.size }
+      job.report("Raster.rgba wrap") { sink += Asekii::Raster.rgba(raster.data, 64, 64).try(&.data.size) || 0 }
     end
+
+    sink
   end
 end
 
-Bench::Raster.run
+puts "sink #{Bench::Raster.run}"
